@@ -1,0 +1,295 @@
+/* Home-only sections. Page frame, header, tabs and footer live in ../shell/shell.module.css. */
+/* Main */
+.main {
+  display: flex;
+  min-height: calc(100dvh - 56px - 80px);
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+.hero {
+  display: flex;
+  margin: auto 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 12px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 32px;
+  letter-spacing: -0.2px;
+  color: rgb(2, 17, 5);
+  text-align: center;
+}
+
+.highlight {
+  display: inline;
+  line-height: 30px;
+  box-shadow: rgb(148, 255, 218) 0 -8px 0 0 inset;
+}
+
+.highlight > span {
+  display: inline-block;
+  line-height: 32px;
+}
+
+.highlight strong {
+  display: inline-block;
+  font-weight: 700;
+}
+
+.searchArea {
+  display: flex;
+  width: 100%;
+  max-width: 400px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  height: 50px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(224, 224, 224);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.fieldIcon {
+  display: flex;
+  align-items: center;
+  padding-left: 14px;
+}
+
+.field input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 400;
+  color: rgb(30, 30, 30);
+}
+
+.field input::placeholder {
+  color: rgb(153, 153, 153);
+}
+
+.clearButton {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  border-radius: 9999px;
+}
+
+.clearButton span {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgb(232, 232, 232);
+}
+
+/* Search result */
+.resultCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 24px 20px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: rgba(20, 48, 112, 0.35) 0 10px 30px -18px;
+}
+
+.avatarHalo {
+  display: flex;
+  margin-top: -8px;
+  width: 112px;
+  height: 112px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgb(255, 240, 235);
+}
+
+.avatarRing {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  box-shadow: #fff 0 0 0 4px;
+}
+
+.avatarFrame {
+  display: block;
+  width: 84px;
+  height: 84px;
+  overflow: hidden;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 50%;
+  background: rgb(242, 242, 242);
+}
+
+.avatarFrame img {
+  display: block;
+  width: 82px;
+  height: 82px;
+  object-fit: cover;
+}
+
+.resultName {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 27px;
+  color: rgb(30, 30, 30);
+}
+
+.resultMeta {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.resultDomain {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 21px;
+  color: rgb(102, 102, 102);
+}
+
+.resultSlug {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21px;
+  color: rgb(30, 30, 30);
+}
+
+.metaDot {
+  width: 3px;
+  height: 3px;
+  margin: 0 8px 0 9px;
+  border-radius: 50%;
+  background: rgb(204, 204, 204);
+}
+
+.resultFollowers {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(136, 136, 136);
+}
+
+.enterButton {
+  display: flex;
+  width: 100%;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 21px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgb(20, 48, 112);
+}
+
+.enterButton p {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+  color: #fff;
+}
+
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0 12px;
+  text-align: center;
+}
+
+.notFound h3 {
+  margin-top: 32px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 27px;
+  color: rgb(30, 30, 30);
+}
+
+.notFound p {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(102, 102, 102);
+}
+
+.notFound h3 + p {
+  margin-top: 4px;
+}
+
+.keyword {
+  color: rgb(20, 48, 112);
+}
+
+/* Branding banner */
+.bannerWrap {
+  margin-top: 40px;
+  padding: 0 16px;
+}
+
+.banner {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 10px 18px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: rgba(0, 0, 0, 0.12) 0 8px 32px 0;
+  cursor: pointer;
+}
+
+.bannerInner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.bannerLogo {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.bannerInner p {
+  font-size: 16px;
+  line-height: 25.6px;
+  color: #000;
+}
+
+.bannerInner strong {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 25.6px;
+  color: #000;
+  text-decoration: underline;
+}
+
+/* The source sets word-break: keep-all on its text components. */
+:where(.main) :where(p, h1, h3, span, strong) {
+  word-break: keep-all;
+}

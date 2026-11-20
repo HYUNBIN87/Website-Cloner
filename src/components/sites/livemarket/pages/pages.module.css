@@ -1,0 +1,294 @@
+/* /following */
+.followingMain {
+  padding: 8px 16px 64px;
+}
+
+.emptyState {
+  display: flex;
+  min-height: calc(100dvh - 144px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyState img {
+  display: block;
+  width: 100px;
+  height: 100px;
+}
+
+.emptyTitle {
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 25.6px;
+  color: rgb(2, 17, 5);
+}
+
+.emptyText {
+  font-size: 16px;
+  line-height: 25.6px;
+  color: rgb(2, 17, 5);
+}
+
+/* /order/list (no header or tab bar on the source) */
+.plainPage {
+  min-height: 100dvh;
+  background: #fff;
+}
+
+.plainColumn {
+  max-width: 500px;
+  margin: 0 auto;
+  overflow: clip visible;
+}
+
+.orderTabsNav {
+  padding: 4px 0;
+}
+
+.orderTabs {
+  display: flex;
+  gap: 12px;
+  overflow: auto;
+  border-bottom: 1px solid rgb(173, 183, 176);
+}
+
+.orderTab {
+  flex: 1;
+  margin-bottom: -1px;
+  padding: 6px 0;
+  border-bottom: 1px solid transparent;
+}
+
+.orderTab p {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 25.6px;
+  color: rgb(224, 229, 226);
+  text-align: center;
+}
+
+.orderTabActive {
+  border-bottom-color: rgb(2, 17, 5);
+}
+
+.orderTabActive p {
+  color: rgb(2, 17, 5);
+}
+
+.orderBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 24px;
+  background: rgb(245, 247, 246);
+}
+
+.lockedState {
+  display: flex;
+  min-height: 60dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.lockIcon {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.28px;
+  color: rgb(30, 30, 30);
+}
+
+.lockedText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.lockedTitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 25.6px;
+  color: rgb(30, 30, 30);
+}
+
+.lockedSub {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(102, 102, 102);
+}
+
+.navyButton {
+  display: flex;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 1px solid rgb(20, 48, 112);
+  border-radius: 8px;
+  background: rgb(20, 48, 112);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #fff;
+}
+
+/* /auth/login */
+.loginMain {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.loginBox {
+  display: flex;
+  width: 100%;
+  max-width: 400px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.loginLabel {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 36px;
+  color: rgb(26, 26, 26);
+}
+
+.loginBrand {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 45px;
+  color: rgb(26, 26, 26);
+}
+
+.loginLogo {
+  display: block;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.loginLogo img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}
+
+.kakaoButton {
+  display: flex;
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 1px solid rgb(254, 229, 0);
+  border-radius: 12px;
+  background: rgb(254, 229, 0);
+}
+
+.kakaoInner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.kakaoInner p {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: normal;
+  color: rgb(2, 17, 5);
+}
+
+.plainPage :where(p, h1, span) {
+  word-break: keep-all;
+}
+
+/* /following, logged in (demo session): the main area fills the viewport below the header. */
+.followingMainLoggedIn {
+  min-height: calc(100dvh - 136px);
+}
+
+.followList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px 64px;
+}
+
+.followCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgb(248, 248, 248);
+}
+
+.followStore {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.followAvatar {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 0.67px solid rgb(232, 232, 232);
+  border-radius: 50%;
+  background: rgb(242, 242, 242);
+}
+
+.followAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.followName {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 25.6px;
+  color: rgb(30, 30, 30);
+}
+
+.visitButton {
+  padding: 6px 12px;
+  border: 0.67px solid rgb(20, 48, 112);
+  border-radius: 8px;
+}
+
+.visitButton span {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 19.2px;
+  color: rgb(20, 48, 112);
+}
+
+/* Clone-only demo login (not on the source). Kept quiet so the source layout reads first. */
+.demoLogin {
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: rgb(130, 141, 134);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -1,0 +1,51 @@
+/* Page-wide rules mirrored from livemarket.pro's global stylesheet. */
+:root {
+  --lm-font-sans: var(--lm-font-pretendard), Pretendard, ui-sans-serif, system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --lm-font-display: var(--lm-font-gmarket), GmarketSans, var(--lm-font-sans);
+}
+
+html,
+body {
+  max-width: 100vw;
+  font-synthesis: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  color: #fff;
+  background-color: #fff;
+  font-family: var(--lm-font-sans);
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body :where(div, span, p, a, h1, h2, h3, h4, button, input, img, iframe, ul, li, nav, header, footer, main, section) {
+  line-height: 150%;
+  font-family: var(--lm-font-sans);
+}
+
+body :where(a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+body :where(button) {
+  border: 0;
+  background-color: transparent;
+  cursor: pointer;
+  padding: 0;
+  font-size: 100%;
+}
+
+body :where(input:focus) {
+  outline: none;
+}
+
+/* The profile-live page uses a black document background. */
+body:has([data-lm-theme="dark"]) {
+  background-color: #000;
+}

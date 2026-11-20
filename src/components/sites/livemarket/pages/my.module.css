@@ -1,0 +1,538 @@
+/* /my, logged in (demo session). Values from the source's logged-in /my page. */
+.page {
+  min-height: 100dvh;
+  background: #fff;
+}
+
+.main {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 12px 20px 64px;
+}
+
+.main :where(p, h2, h3, span) {
+  word-break: keep-all;
+}
+
+/* Fixed white strip with a floating back button. */
+.topBar {
+  display: flex;
+  height: 44px;
+  max-width: 480px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.topShade {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1000;
+  height: 44px;
+  background: #fff;
+  box-shadow: #fff 0 0 12px 12px;
+}
+
+.backSlot {
+  position: fixed;
+  top: 12px;
+  left: max(20px, calc(50% - 230px));
+  z-index: 1000;
+  display: flex;
+}
+
+.back {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 0.67px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    rgba(255, 255, 255, 0.9) 1px 1px 0 0 inset,
+    rgba(255, 255, 255, 0.5) -1px -1px 0 0 inset,
+    rgba(0, 0, 0, 0.1) 0 1px 6px 0;
+  backdrop-filter: blur(12px);
+}
+
+.stack {
+  display: flex;
+  max-width: 480px;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* Profile */
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatarButton {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgb(248, 248, 248);
+}
+
+.avatar {
+  display: block;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.camera {
+  position: absolute;
+  top: 68px;
+  left: 68px;
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgb(232, 52, 10);
+}
+
+.nickname {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 30.8px;
+  letter-spacing: -0.22px;
+  color: rgb(30, 30, 30);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Settings card */
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0.67px solid rgb(232, 232, 232);
+  border-radius: 16px;
+  background: rgb(248, 248, 248);
+}
+
+.block {
+  padding: 24px 20px;
+}
+
+.blockBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blockTitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 27px;
+  letter-spacing: -0.18px;
+  color: rgb(30, 30, 30);
+}
+
+.divider {
+  height: 1px;
+  background: rgb(232, 232, 232);
+}
+
+.field {
+  display: flex;
+  height: 49px;
+  align-items: center;
+  overflow: hidden;
+  border: 0.67px solid rgb(224, 224, 224);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.fieldInvalid {
+  border-color: rgb(185, 28, 28);
+}
+
+.field input {
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  padding: 12px 14px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: rgb(30, 30, 30);
+}
+
+.field input::placeholder {
+  color: rgb(30, 30, 30);
+}
+
+.saveSlot {
+  display: flex;
+  align-items: center;
+  padding-right: 14px;
+}
+
+.save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21px;
+  color: rgb(232, 52, 10);
+}
+
+.helper {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: rgb(102, 102, 102);
+}
+
+.helperError {
+  color: rgb(185, 28, 28);
+}
+
+.rowButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+
+.addressText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.addressMain {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 25.6px;
+  color: rgb(30, 30, 30);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.addressSub {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 19.2px;
+  color: rgb(102, 102, 102);
+}
+
+.addressFull {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.couponButton {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.couponHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.couponSub {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(102, 102, 102);
+}
+
+.couponRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.couponRow p {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 25.6px;
+  color: rgb(102, 102, 102);
+}
+
+/* Logout with its confirm popover */
+.logoutWrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.logout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+}
+
+.logout p {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22.4px;
+  color: rgb(102, 102, 102);
+}
+
+.popoverDismiss {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.popover {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  z-index: 2;
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  transform: translateX(-50%);
+  transform-origin: 50% calc(100% + 10px);
+  animation: lm-pop-in 0.18s ease-out;
+}
+
+.popoverBody {
+  padding: 10px;
+  border-radius: 36px;
+  background: rgba(232, 232, 232, 0.72);
+  box-shadow:
+    rgba(0, 0, 0, 0.06) 0 0 0 1px,
+    rgba(255, 255, 255, 0.9) 0 1px 0 0 inset,
+    rgba(0, 0, 0, 0.24) 0 18px 40px -12px;
+  backdrop-filter: blur(16px);
+}
+
+.popoverButton {
+  display: flex;
+  width: 100%;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: rgba(0, 0, 0, 0.06) 0 1px 2px 0;
+}
+
+.popoverButton span {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 25.6px;
+  color: rgb(185, 28, 28);
+}
+
+.popoverArrow {
+  position: absolute;
+  bottom: -10px;
+  left: calc(50% - 9.5px);
+  width: 19px;
+  height: 10px;
+  background: rgba(232, 232, 232, 0.72);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+@keyframes lm-pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.92);
+  }
+}
+
+/* Sheets */
+.tallSheet {
+  height: calc(100dvh - 72px);
+  max-height: none;
+  border-radius: 16px 16px 0 0;
+}
+
+/* These sheets have no subtitle, so the close button centers on the title like the source. */
+.tallSheet button[aria-label="닫기"] {
+  top: 14px;
+}
+
+.sheetBody {
+  padding: 0;
+}
+
+.addressToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgb(240, 240, 240);
+}
+
+.addressToolbar p {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+  color: rgb(68, 68, 68);
+}
+
+.addButton {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 0.67px solid rgb(20, 48, 112);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21px;
+  color: rgb(20, 48, 112);
+}
+
+.addressList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px 16px 16px;
+}
+
+.addressCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 0.67px solid rgb(232, 232, 232);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.addressCardTop {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  margin: -6px 0;
+}
+
+.primaryChip {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  border: 0.67px solid rgb(30, 30, 30);
+  border-radius: 999px;
+  background: rgb(30, 30, 30);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #fff;
+}
+
+.addressName {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+  color: rgb(30, 30, 30);
+}
+
+.addressDetail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.addressLine {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22.4px;
+  color: rgb(68, 68, 68);
+}
+
+.ordererRow {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ordererChip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(242, 242, 242);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  color: rgb(102, 102, 102);
+}
+
+.couponEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 64px 20px;
+}
+
+.couponEmptyTitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 25.6px;
+  color: rgb(30, 30, 30);
+}
+
+.couponEmptySub {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(136, 136, 136);
+}
+
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  z-index: 3000;
+  max-width: calc(100vw - 32px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(30, 30, 30, 0.9);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22.4px;
+  color: #fff;
+  transform: translateX(-50%);
+}

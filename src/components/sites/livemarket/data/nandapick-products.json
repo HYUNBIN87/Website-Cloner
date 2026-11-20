@@ -1,0 +1,226 @@
+{
+  "capturedAt": "2026-11-20",
+  "notice": "⚠️ 계좌변경!!! Sc제일은행 주문서대로 입금해주세요!!!!!!!-->입금시 닉네임 아닌 성함 그대로 입금하기!!!!\n⚠️창고방송 특성상 교환//반품 되지 않습니다. (사이즈, 단순변심, 색상교환 등등) 실밥은 반품대상이 아닙니다. 신중구매 부탁드립니다.\n⚠️ 주문후30분 안으로 반드시 입금해주세요.\n⚠️모두 주문서에 담뒤 한 번에 결제해 주세요.",
+  "products": [
+    {
+      "id": 1,
+      "name": "아디카라냉감티",
+      "replay": "4:31:46",
+      "price": "8,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": true,
+      "image": "/sites/livemarket/products/cad68c113ea1.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/wdUBEhdTLug1jjECavowXXr4ac0Vfyj2_1000073702.jpg"
+    },
+    {
+      "id": 2,
+      "name": "꼼데기본티",
+      "replay": "4:29:07",
+      "price": "8,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/590cad0463ec.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/y8oAXCmn6bVqhQ9LcULwKDQNps8t1l1x_1000073701.jpg"
+    },
+    {
+      "id": 3,
+      "name": "폴로니트",
+      "replay": "4:22:38",
+      "price": "19,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/7fc742b1cb5f.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/pttPz0kDrrCuPLfI9Pn7Ci2P7dDIVgte_live_market_default_product_2.png"
+    },
+    {
+      "id": 4,
+      "name": "아디바시티",
+      "replay": "4:08:44",
+      "price": "89,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/a55b2e0073e8.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/3vYxncTMapxsII37fimh2JkOIuk2OxSy_1000073697.jpg"
+    },
+    {
+      "id": 5,
+      "name": "아더바시티",
+      "replay": "3:59:24",
+      "price": "89,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/7fc742b1cb5f.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/pttPz0kDrrCuPLfI9Pn7Ci2P7dDIVgte_live_market_default_product_2.png"
+    },
+    {
+      "id": 6,
+      "name": "니고나이키",
+      "replay": "3:48:09",
+      "price": "89,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/8ea345e96ba3.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/iUSxqkAbvQuY84NY4ToJRiMNJpxRr6sT_1000073696.jpg"
+    },
+    {
+      "id": 7,
+      "name": "스투기본쭉티",
+      "replay": "3:34:48",
+      "price": "19,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/59ab2c5b8aab.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/vEkwJz9iM8AJyhE9lx6nS5mAViWgffkH_1000073695.jpg"
+    },
+    {
+      "id": 8,
+      "name": "스투기모월드집업",
+      "replay": "3:23:09",
+      "price": "45,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/528cbbdde4fc.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/mYLutdgXRknTkRk0baOqto918UmSnrut_17951451869683835329021458513165.jpg"
+    },
+    {
+      "id": 9,
+      "name": "스투기모자수후드",
+      "replay": "3:16:20",
+      "price": "45,000원",
+      "stock": "재고 : 9개",
+      "soonSoldOut": true,
+      "pinned": false,
+      "image": "/sites/livemarket/products/7fc742b1cb5f.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/pttPz0kDrrCuPLfI9Pn7Ci2P7dDIVgte_live_market_default_product_2.png"
+    },
+    {
+      "id": 10,
+      "name": "수투기모기본후드",
+      "replay": "3:08:29",
+      "price": "45,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/7fc742b1cb5f.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/pttPz0kDrrCuPLfI9Pn7Ci2P7dDIVgte_live_market_default_product_2.png"
+    },
+    {
+      "id": 11,
+      "name": "스투집업",
+      "replay": "3:00:08",
+      "price": "49,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/7fc742b1cb5f.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/pttPz0kDrrCuPLfI9Pn7Ci2P7dDIVgte_live_market_default_product_2.png"
+    },
+    {
+      "id": 12,
+      "name": "스투기모주사위후드",
+      "replay": "2:51:40",
+      "price": "45,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/69f52b36d358.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/cCzeBFuRXirfZB37qDA5CSq4FzjusKhy_1000073694.jpg"
+    },
+    {
+      "id": 13,
+      "name": "스투 기모 맨투맨.",
+      "replay": "2:40:27",
+      "price": "29,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/7fc742b1cb5f.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/pttPz0kDrrCuPLfI9Pn7Ci2P7dDIVgte_live_market_default_product_2.png"
+    },
+    {
+      "id": 14,
+      "name": "내셔뽀그리",
+      "replay": "2:25:08",
+      "price": "55,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/a33514005d99.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/3gXmtdLKXKWwZiiseOs7ks309OUVt2fc_1000073693.jpg"
+    },
+    {
+      "id": 15,
+      "name": "말땡패딩",
+      "replay": "2:13:39",
+      "price": "49,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/699f4432d41f.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/JQtZ9diQVixteWkhrJgT9sva0LEpwroF_2026-11-20%2010%2047%2030.png"
+    },
+    {
+      "id": 16,
+      "name": "스투시패딩",
+      "replay": "2:06:24",
+      "price": "49,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/c65a3aafc919.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/opPkeSZznoO0ecOHhmWy1cXqqGQojfwv_1000073692.jpg"
+    },
+    {
+      "id": 17,
+      "name": "나이키패딩",
+      "replay": "1:22:18",
+      "price": "49,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/7606654a7b47.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/JtCXIQ2LPM82MjELWjOaDlHNfgsX18zh_2026-11-20%2010%2007%2059.png"
+    },
+    {
+      "id": 18,
+      "name": "휴먼 강아지 기모 후드",
+      "replay": "56:44",
+      "price": "49,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/c6559bc051f3.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/ahBQ9geOghoD0yxF201pdxwEwe54TDOC_1000073690.jpg"
+    },
+    {
+      "id": 19,
+      "name": "휴먼 피카추 기모 후드",
+      "replay": "48:30",
+      "price": "49,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/95ee7d8440aa.png",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/w7RpZkexQOnStsNuluYp3dhccSsama0D_2026-11-20%2009%2029%2019.png"
+    },
+    {
+      "id": 20,
+      "name": "폴로 후드 기모",
+      "replay": "34:03",
+      "price": "49,000원",
+      "stock": null,
+      "soonSoldOut": false,
+      "pinned": false,
+      "image": "/sites/livemarket/products/19b2ddbada87.jpg",
+      "sourceImage": "https://d2l1frtc95a2nc.cloudfront.net/product/VqJmx2xojLmAaFKZjDu5xvSkDYdHU6UZ_rUnX2wP99l35F9YijI6HhtLkzyO3XAJG_17951313032009090252262439235766.jpg"
+    }
+  ]
+}

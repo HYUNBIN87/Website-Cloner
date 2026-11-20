@@ -47,3 +47,7 @@ next-env.d.ts
 
 # Local temp files
 temp/
+
+# Screenshots of the source site (real seller data). Kept locally, never published.
+docs/design-references/*/source-*.png
+docs/design-references/*/cmp-*.png
