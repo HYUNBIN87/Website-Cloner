@@ -6,6 +6,7 @@ export const ROUTES = {
   following: "/following",
   orderList: "/order/list",
   my: "/my",
+  preOrder: (orderId: string) => `/pre-order/${encodeURIComponent(orderId)}`,
   profileLive: "/nandapick/profile-live",
   room: "/nandapick/profile-live/room",
   /** Mirrors the source: gated actions send visitors to /auth/login with the page to return to. */

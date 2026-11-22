@@ -87,7 +87,7 @@ Shared files:
 | Screen / trigger | Source (observed logged in) | Clone |
 |---|---|---|
 | `/following` | Same shell; list of favorite stores: `#f8f8f8` card, radius 12, padding 16, 48px avatar, name 16/700, navy outline "스토어 방문". Card links to `/{slug}`. API `GET v1/partner-store/follows/following?perPage=20&page=1` | One fake entry (데모샵 → `/nandapick`) |
-| `/order/list` 주문서 결제방 | Pre-order cards (white, radius 16, padding 16): seller strip `#e6f9f3` with avatar + "🔴 yy.MM.dd HH:mm 라이브" or "⏰ yy.MM.dd HH:mm 타임딜", status chip (status color on 8% tint), "N시간 전 주문", order number, item rows (80px image, name, option `(+추가금)`, "수량 N개 · 셀러", amount). Card links to `/pre-order/{id}`. API `GET v1/pre-orders?page=1&perPage=10&customerPreOrderStatus=ALL` | Four fake pre-orders covering 미결제 / 주문서 취소 / 결제완료 / 기한 만료. Cards are not links (`/pre-order/{id}` is out of scope) |
+| `/order/list` 주문서 결제방 | Pre-order cards (white, radius 16, padding 16): seller strip `#e6f9f3` with avatar + "🔴 yy.MM.dd HH:mm 라이브" or "⏰ yy.MM.dd HH:mm 타임딜", status chip (status color on 8% tint), "N시간 전 주문", order number, item rows (80px image, name, option `(+추가금)`, "수량 N개 · 셀러", amount). Card links to `/pre-order/{id}`. API `GET v1/pre-orders?page=1&perPage=10&customerPreOrderStatus=ALL` | Four fake pre-orders covering 미결제 / 주문서 취소 / 결제완료 / 기한 만료. Orders placed in the demo room are listed first. Cards link to the local `/pre-order/{id}` |
 | `/order/list` 실시간 결제방 | "📦 주문 내역이 없습니다 / 주문하시면 여기에 표시됩니다" for this account | Same empty state |
 | `/my` | Fixed back button (glass circle), 96px avatar with red camera badge, nickname 22/700, settings card (닉네임 input + 저장, 기본 배송지 row, 내 쿠폰함 row), 로그아웃. APIs `GET v3/user`, `GET v1/address/customer/primary`, `GET v1/coupons/customer/placements` | Same layout with fake values |
 | `/my` 닉네임 저장 | Not exercised on the source (would change the account) | Validates 2–24 chars (letters, digits, Hangul, `-` `_` `.`), updates the demo session, shows a toast. Invalid input turns the helper red |
@@ -150,9 +150,22 @@ Not replaced:
 - Source screenshots in `docs/design-references/livemarket/`, which are research evidence of the original page, not clone output.
 
 ## Known gaps
-- Logged-in screens use a client-side demo session, not real auth. The pre-order detail page (`/pre-order/{id}`), real nickname/photo/address changes, and coupon cards (no coupon existed to observe) are not cloned.
+- Logged-in screens use a client-side demo session, not real auth. Real nickname/photo/address changes and coupon cards (no coupon existed to observe) are not cloned.
 - With the placeholder, the mute prompts ("소리가 꺼져 있어요") are hidden; they return when a video ID is set.
 - The replay sheet's mute prompt uses an emoji instead of the source's speaker icon. The copy button uses a glyph, and its source behavior was not verified (the clone copies the page URL).
 - Seller search covers only the captured seller. The real search runs server-side on `api.groo.pro`.
 - Animation phases (rings, CTA icons, pin wiggle) differ between screenshots because they are time-driven.
 - The bottom-sheet drag-to-dismiss gesture (vaul) is not implemented; the overlay, the ×, and Esc close the sheet.
+
+## Order flow after 주문서 담기 (demo session only)
+
+The source's order screens are login-only and were not captured, so this flow is built from a written description of the source, not from inspection. Styling reuses the captured order-list tokens. All names, phone numbers, addresses and the bank account are fake.
+
+| Step | Clone |
+| --- | --- |
+| 주문서 담기 (product bar, product sheet, replay sheet) | Logged out: login redirect as before. Demo session: 옵션 선택 sheet (컬러, 사이즈, 수량, 합계, 주문서 담기). Options are the same fake set for every product |
+| Add | Item is upserted into the open time-deal pre-order (localStorage `livemarket-clone-demo-orders`), the buyer's own "구매 성공! [ 상품명 \| 옵션 - N개 총 N원 ]" line is appended to the chat, and the 타임딜 주문 결제 sheet opens |
+| 주문자정보/배송지 확인 popup | Shown over the sheet until 여기로 주문 is pressed. 배송지 변경 only shows a notice (the clone has one fake address) |
+| 타임딜 주문 결제 sheet | Store strip, 미결제 chip, 타임딜 N회차, order number, address, 주문 품목, 배송 안내 (택배 4,000원) + 요청사항, 결제 금액 (상품 금액 + 배송비 = 최종 결제 금액), 결제수단 (무통장입금, 결제 기한 = order time + 30 min), 입금 안내 (account, 계좌 복사, real-name notice, 입금완료 확인요청) |
+| Rail 주문서 | Demo session: reopens the latest unpaid room order, or a toast if none |
+| `/pre-order/{id}` | Same content as the sheet as a page, for built-in and room orders. Payment method and deposit guide appear only while 미결제. Nothing ever becomes 결제완료: there is no seller side |

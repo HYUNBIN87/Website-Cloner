@@ -10,13 +10,13 @@ import styles from "./overlays.module.css";
 export function RoomProductSheet({
   storeName,
   products,
-  loginUrl,
+  onAdd,
   onReplay,
   onClose,
 }: {
   storeName: string;
   products: readonly Product[];
-  loginUrl: string;
+  onAdd: (product: Product) => void;
   onReplay: (product: Product) => void;
   onClose: () => void;
 }) {
@@ -89,9 +89,9 @@ export function RoomProductSheet({
                 <p className={styles.rowName}>{product.name}</p>
                 <p className={styles.rowPrice}>{product.price}</p>
               </div>
-              <a href={loginUrl} className={styles.rowAdd}>
+              <button type="button" className={styles.rowAdd} onClick={() => onAdd(product)}>
                 주문서 담기
-              </a>
+              </button>
               {product.replay ? (
                 <button type="button" className={styles.rowReplay} onClick={() => onReplay(product)}>
                   <Icon name="play-navy" width={12} />

@@ -55,6 +55,17 @@ function purchaseText(product: Product, option: string, count: number) {
   return `구매 성공! [ ${product.name} | ${option} - ${count}개 총 ${total}원 ]`;
 }
 
+/** The viewer's own purchase line, posted when they add an item to the order sheet. */
+export function ownPurchaseMessage(
+  id: string,
+  buyer: { nickname: string; avatar: string },
+  product: Product,
+  option: string,
+  count: number,
+): ChatMessage {
+  return { id, nickname: buyer.nickname, avatar: buyer.avatar, text: purchaseText(product, option, count) };
+}
+
 /** Deterministic pseudo-random so server and client render the same seed messages. */
 function seeded(seed: number) {
   let value = seed;

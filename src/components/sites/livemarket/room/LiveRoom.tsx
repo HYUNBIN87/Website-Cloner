@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "../Icon";
+import { DEMO_TIME_DEAL, DEMO_USER } from "../data/demo-account";
+import { demoOrders, latestRoomOrder, useDemoOrders } from "../data/demo-orders";
+import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK, ROOM_LOGIN_URL, type Product } from "../data/nandapick";
-import { nextFakeMessage, seedMessages, type ChatMessage } from "../data/room-chat";
+import { nextFakeMessage, ownPurchaseMessage, seedMessages, type ChatMessage } from "../data/room-chat";
 import { ROUTES } from "../data/routes";
 import { SELLERS } from "../data/sellers";
 import { BottomSheet } from "../live/BottomSheet";
@@ -14,6 +17,8 @@ import { LiveVideo } from "../live/LiveVideo";
 import { ReplaySheet, SellerSubtitle } from "../live/ReplaySheet";
 import { HAS_LIVE_VIDEO } from "../data/live-video";
 import sheet from "../live/sheet.module.css";
+import { OptionSheet } from "../order/OptionSheet";
+import { OrderPaySheet } from "../order/OrderPaySheet";
 import { RoomOnboarding, hasCompletedOnboarding } from "./RoomOnboarding";
 import { RoomProductSheet } from "./RoomProductSheet";
 import { StoreVisitModal } from "./StoreVisitModal";
@@ -21,7 +26,7 @@ import styles from "./room.module.css";
 
 const store = NANDAPICK;
 /** Fake identifier: the onboarding is remembered per time deal, like the source. */
-const TIME_DEAL_ID = "demo-time-deal";
+const TIME_DEAL_ID = DEMO_TIME_DEAL.id;
 const MAX_MESSAGES = 200;
 const DIGIT_HEIGHT = 18;
 
@@ -30,6 +35,8 @@ type Overlay =
   | { kind: "products" }
   | { kind: "store" }
   | { kind: "replay"; product: Product }
+  | { kind: "option"; product: Product }
+  | { kind: "pay"; orderId: string }
   | null;
 
 function ViewerCount({ value }: { value: number }) {
@@ -81,10 +88,36 @@ export function LiveRoom() {
   const [atBottom, setAtBottom] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
   const sequence = useRef(0);
+  const session = useDemoSession();
+  const orders = useDemoOrders();
 
   const pinned = store.products.find((product) => product.pinned) ?? store.products[0];
   const followers = SELLERS.find((seller) => seller.slug === store.slug)?.followers ?? 0;
   const close = useCallback(() => setOverlay(null), []);
+  const payOrder = overlay?.kind === "pay" ? orders?.find((order) => order.id === overlay.orderId) : undefined;
+
+  /** 주문서 담기: logged out it goes to login (like the source), logged in it opens the option sheet. */
+  const startOrder = (product: Product) => {
+    if (session) setOverlay({ kind: "option", product });
+    else router.push(ROOM_LOGIN_URL);
+  };
+
+  /** The item joins the time-deal order, the purchase line appears in chat, then the pay sheet opens. */
+  const placeOrder = (product: Product, option: string, quantity: number) => {
+    if (!session) return;
+    const orderId = demoOrders.addItem(product, option, quantity);
+    sequence.current += 1;
+    const message = ownPurchaseMessage(
+      `mine-${sequence.current}`,
+      { nickname: session.nickname, avatar: DEMO_USER.avatar },
+      product,
+      option,
+      quantity,
+    );
+    setMessages((current) => [...current, message].slice(-MAX_MESSAGES));
+    setAtBottom(true);
+    setOverlay({ kind: "pay", orderId });
+  };
 
   // Onboarding is shown until completed for this time deal (stored in localStorage, like the source).
   useEffect(() => {
@@ -156,10 +189,19 @@ export function LiveRoom() {
           setPlayerKey((value) => value + 1);
         }
         break;
-      case "order":
+      case "order": {
+        if (!session) {
+          router.push(ROOM_LOGIN_URL);
+          break;
+        }
+        const current = latestRoomOrder(orders);
+        if (current) setOverlay({ kind: "pay", orderId: current.id });
+        else setToast("주문서에 담은 상품이 없어요");
+        break;
+      }
       case "address":
       case "nickname":
-        router.push(ROOM_LOGIN_URL);
+        router.push(session ? ROUTES.my : ROOM_LOGIN_URL);
         break;
       case "inquiry":
         window.open(store.customerCenter, "_blank", "noopener,noreferrer");
@@ -347,9 +389,9 @@ export function LiveRoom() {
                 <p>{pinned.price}</p>
               </div>
             </div>
-            <a href={ROOM_LOGIN_URL} className={styles.addButton}>
+            <button type="button" className={styles.addButton} onClick={() => startOrder(pinned)}>
               주문서 담기
-            </a>
+            </button>
           </div>
         </div>
 
@@ -369,14 +411,22 @@ export function LiveRoom() {
         <RoomProductSheet
           storeName={store.name}
           products={store.products}
-          loginUrl={ROOM_LOGIN_URL}
+          onAdd={startOrder}
           onReplay={(product) => setOverlay({ kind: "replay", product })}
           onClose={close}
         />
       )}
       {overlay?.kind === "replay" && (
-        <ReplaySheet product={overlay.product} loginUrl={ROOM_LOGIN_URL} onClose={close} />
+        <ReplaySheet product={overlay.product} loginUrl={ROOM_LOGIN_URL} onAdd={startOrder} onClose={close} />
       )}
+      {overlay?.kind === "option" && (
+        <OptionSheet
+          product={overlay.product}
+          onSubmit={(option, quantity) => placeOrder(overlay.product, option, quantity)}
+          onClose={close}
+        />
+      )}
+      {payOrder && <OrderPaySheet order={payOrder} onClose={close} />}
       {overlay?.kind === "store" && (
         <StoreVisitModal
           storeName={store.name}

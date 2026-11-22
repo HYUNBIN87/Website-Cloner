@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "../Icon";
 import {
-  DEMO_PRE_ORDERS,
   PRE_ORDER_STATUS,
   formatKRW,
   formatOrderedAgo,
   type DemoPreOrder,
 } from "../data/demo-account";
+import { useDemoOrders } from "../data/demo-orders";
 import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK } from "../data/nandapick";
 import { ROUTES } from "../data/routes";
@@ -21,11 +21,12 @@ const TABS = ["주문서 결제방", "실시간 결제방"] as const;
 
 /**
  * /order/list. Logged out, both tabs show the login prompt. With the demo login, 주문서 결제방
- * lists fake pre-orders and 실시간 결제방 shows the empty state (as observed on the source).
+ * lists fake pre-orders (built-in ones plus any placed in the demo live room) and 실시간 결제방 shows the empty state (as observed on the source).
  */
 export function OrderListPage() {
   const [active, setActive] = useState<(typeof TABS)[number]>(TABS[0]);
   const session = useDemoSession();
+  const preOrders = useDemoOrders();
 
   return (
     <div className={styles.plainPage}>
@@ -62,7 +63,7 @@ export function OrderListPage() {
                 </Link>
               </div>
             ) : active === TABS[0] ? (
-              DEMO_PRE_ORDERS.map((order) => <PreOrderCard key={order.id} order={order} />)
+              (preOrders ?? []).map((order) => <PreOrderCard key={order.id} order={order} />)
             ) : (
               <div className={orders.empty}>
                 <h1 aria-hidden="true">📦</h1>
@@ -77,11 +78,11 @@ export function OrderListPage() {
   );
 }
 
-/** One pre-order. The source links the card to /pre-order/{id}, which the clone does not cover. */
+/** One pre-order. Like the source, the card links to /pre-order/{id}. */
 function PreOrderCard({ order }: { order: DemoPreOrder }) {
   const status = PRE_ORDER_STATUS[order.status];
   return (
-    <article className={orders.card} aria-label={`주문서 ${order.id}`}>
+    <Link href={ROUTES.preOrder(order.id)} className={orders.card} aria-label={`주문서 ${order.id}`}>
       <div className={orders.seller}>
         <div className={orders.sellerName}>
           <span className={orders.avatar}>
@@ -130,6 +131,6 @@ function PreOrderCard({ order }: { order: DemoPreOrder }) {
           </div>
         ))}
       </div>
-    </article>
+    </Link>
   );
 }

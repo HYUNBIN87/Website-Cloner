@@ -25,10 +25,13 @@ export function SellerSubtitle() {
 export function ReplaySheet({
   product,
   loginUrl,
+  onAdd,
   onClose,
 }: {
   product: Product;
   loginUrl: string;
+  /** When given, 주문서 담기 opens the order flow instead of going to login. */
+  onAdd?: (product: Product) => void;
   onClose: () => void;
 }) {
   const [muted, setMuted] = useState(true);
@@ -53,9 +56,15 @@ export function ReplaySheet({
       bodyClassName={sheet.clipBody}
       footer={
         <div className={sheet.footer}>
-          <a href={loginUrl} className={sheet.footerAdd}>
-            + 주문서 담기
-          </a>
+          {onAdd ? (
+            <button type="button" className={sheet.footerAdd} onClick={() => onAdd(product)}>
+              + 주문서 담기
+            </button>
+          ) : (
+            <a href={loginUrl} className={sheet.footerAdd}>
+              + 주문서 담기
+            </a>
+          )}
           <button
             type="button"
             className={sheet.footerCopy}

@@ -1,0 +1,653 @@
+/*
+ * Order flow after "주문서 담기": option sheet, 타임딜 주문 결제 sheet, address popup and the
+ * /pre-order/{id} page. The source screens are login-only and were not captured, so this reuses
+ * the tokens of the captured order list (cards, chips, seller strip) and room sheets.
+ */
+
+/* Shared buttons */
+.primaryButton {
+  display: flex;
+  width: 100%;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgb(20, 48, 112);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  color: #fff;
+}
+
+.primaryButton:disabled {
+  background: rgb(224, 224, 224);
+  color: rgb(153, 153, 153);
+  cursor: default;
+}
+
+/* Option sheet */
+.optionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 20px;
+  color: rgb(30, 30, 30);
+}
+
+.optionProduct {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgb(245, 247, 246);
+}
+
+.optionProduct img {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.optionName {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22.4px;
+}
+
+.optionPrice {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.optionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionLabel {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.optionChip {
+  min-width: 56px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgb(224, 224, 224);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(68, 68, 68);
+}
+
+.optionChipActive {
+  border-color: rgb(20, 48, 112);
+  background: rgba(20, 48, 112, 0.06);
+  font-weight: 700;
+  color: rgb(20, 48, 112);
+}
+
+.stepper {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(224, 224, 224);
+  border-radius: 10px;
+}
+
+.stepper button {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: 600;
+  color: rgb(30, 30, 30);
+}
+
+.stepper button:disabled {
+  color: rgb(204, 204, 204);
+  cursor: default;
+}
+
+.stepper span {
+  min-width: 44px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.optionFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 20px 20px;
+  border-top: 1px solid rgb(242, 242, 242);
+  color: rgb(30, 30, 30);
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.totalRow p {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.totalCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(102, 102, 102);
+}
+
+.totalRow strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: rgb(232, 52, 10);
+}
+
+/* Pay sheet */
+.paySheet {
+  height: calc(100dvh - 72px);
+}
+
+.payBody {
+  padding: 12px 16px 24px;
+  background: rgb(245, 247, 246);
+}
+
+/* Shared order content */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: rgb(30, 30, 30);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: rgba(0, 0, 0, 0.04) 0 1px 3px 0, rgba(0, 0, 0, 0.02) 0 1px 2px 0;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  color: rgb(3, 34, 12);
+}
+
+.cardTitle span {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(130, 141, 134);
+}
+
+.storeStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgb(230, 249, 243);
+}
+
+.storeName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 19.2px;
+  color: rgb(28, 61, 38);
+}
+
+.storeAvatar {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  overflow: hidden;
+  border: 0.67px solid rgb(232, 232, 232);
+  border-radius: 50%;
+  background: rgb(242, 242, 242);
+}
+
+.storeAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stripLabel {
+  font-size: 12px;
+  line-height: 19.2px;
+  color: rgb(54, 70, 58);
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip,
+.roundChip {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.roundChip {
+  background: rgba(20, 48, 112, 0.08);
+  color: rgb(20, 48, 112);
+}
+
+.meta {
+  font-size: 12px;
+  line-height: 19.2px;
+  color: rgb(130, 141, 134);
+}
+
+.address {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.addressRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.addressRow p {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22.4px;
+  color: rgb(68, 68, 68);
+}
+
+.addressTag {
+  width: 52px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 0 0 0 0;
+  border-radius: 999px;
+  background: rgb(242, 242, 242);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  color: rgb(102, 102, 102);
+  text-align: center;
+}
+
+.item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.item:first-child {
+  padding-top: 0;
+}
+
+.item:last-child {
+  padding-bottom: 0;
+}
+
+.item:not(:last-child) {
+  border-bottom: 1px solid rgb(240, 240, 240);
+}
+
+.itemImage {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.itemInfo {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemName {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22.4px;
+  color: rgb(3, 34, 12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemAmount {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+  color: rgb(2, 17, 5);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(68, 68, 68);
+}
+
+.line strong {
+  font-weight: 700;
+  color: rgb(30, 30, 30);
+}
+
+.totalLine {
+  padding-top: 10px;
+  border-top: 1px solid rgb(240, 240, 240);
+  font-weight: 700;
+  color: rgb(30, 30, 30);
+}
+
+.totalLine strong {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 27px;
+  color: rgb(232, 52, 10);
+}
+
+.request {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.request span {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 19.2px;
+  color: rgb(102, 102, 102);
+}
+
+.request textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgb(224, 224, 224);
+  border-radius: 10px;
+  background: #fff;
+  font-family: var(--lm-font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  color: rgb(30, 30, 30);
+  resize: none;
+}
+
+.request textarea:focus {
+  border-color: rgb(20, 48, 112);
+  outline: none;
+}
+
+.request textarea::placeholder {
+  font-size: 14px;
+  color: rgb(153, 153, 153);
+}
+
+.request textarea:read-only {
+  background: rgb(248, 248, 248);
+}
+
+.method {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px solid rgb(20, 48, 112);
+  border-radius: 10px;
+  background: rgba(20, 48, 112, 0.06);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(20, 48, 112);
+}
+
+.deadline {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 19.2px;
+  color: rgb(180, 83, 9);
+}
+
+.deadline strong {
+  font-weight: 800;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgb(245, 247, 246);
+}
+
+.accountNumber {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  color: rgb(30, 30, 30);
+}
+
+.copyButton {
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  border: 1px solid rgb(30, 30, 30);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(30, 30, 30);
+  white-space: nowrap;
+}
+
+.depositNote {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(232, 52, 10, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 19.2px;
+  color: rgb(232, 52, 10);
+}
+
+.depositNote strong {
+  font-weight: 800;
+}
+
+.requested {
+  font-size: 12px;
+  line-height: 19.2px;
+  color: rgb(130, 141, 134);
+  text-align: center;
+}
+
+/* 주문자정보 / 배송지 확인 popup */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  background: rgba(0, 0, 0, 0.58);
+  animation: lm-order-fade 0.2s ease-out;
+}
+
+.modal {
+  display: flex;
+  width: 100%;
+  max-width: 400px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 20px 20px;
+  border-radius: 20px;
+  background: #fff;
+  color: rgb(30, 30, 30);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 27px;
+  text-align: center;
+}
+
+.modalText {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(102, 102, 102);
+  text-align: center;
+}
+
+.modalAddress {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgb(245, 247, 246);
+}
+
+.modalNotice {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 19.2px;
+  color: rgb(180, 83, 9);
+  text-align: center;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.modalSecondary,
+.modalPrimary {
+  display: flex;
+  height: 48px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.modalSecondary {
+  border: 1px solid rgb(30, 30, 30);
+  color: rgb(30, 30, 30);
+}
+
+.modalPrimary {
+  background: rgb(20, 48, 112);
+  color: #fff;
+}
+
+/* /pre-order/{id} */
+.detailHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgb(242, 242, 242);
+  background: #fff;
+}
+
+.detailHeader h1 {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  color: rgb(30, 30, 30);
+}
+
+.back {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.detailBody {
+  min-height: calc(100dvh - 52px);
+  padding: 12px 16px 32px;
+  background: rgb(245, 247, 246);
+}
+
+.detailEmpty {
+  display: flex;
+  min-height: 60dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgb(54, 70, 58);
+}
+
+.content :where(p, span, h3),
+.modal :where(p, span, h3),
+.optionBody :where(p, span) {
+  word-break: keep-all;
+}
+
+@keyframes lm-order-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

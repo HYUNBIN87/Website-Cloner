@@ -54,7 +54,45 @@ export type DemoPreOrder = {
   status: PreOrderStatus;
   minutesAgo: number;
   items: DemoPreOrderItem[];
+  /** 타임딜 회차. Absent for orders placed in a regular live. */
+  round?: number;
+  /** "yy.MM.dd HH:mm" — shown while the order is unpaid. */
+  paymentDeadline?: string;
+  /** 배송 요청사항 typed by the buyer. */
+  request?: string;
+  /** The buyer pressed "여기로 주문" on the address confirmation popup. */
+  addressConfirmed?: boolean;
+  /** The buyer pressed "입금완료 확인요청". */
+  depositRequested?: boolean;
 };
+
+/** Fake time deal running in the demo live room. */
+export const DEMO_TIME_DEAL = { id: "demo-time-deal", round: 3 } as const;
+
+export const DEMO_SHIPPING = { method: "택배", fee: 4000 } as const;
+
+/** Unpaid orders must be paid within 30 minutes, as the store notice says. */
+export const PAYMENT_WINDOW_MINUTES = 30;
+
+/** Fake deposit account: the bank, number and holder are all invented. */
+export const DEMO_BANK_ACCOUNT = {
+  bank: "예시은행",
+  number: "000-000-000000",
+  holder: "데모상점",
+} as const;
+
+/** Fake color/size options: the store snapshot has no option data. */
+export const DEMO_OPTIONS = {
+  colors: ["블랙", "화이트", "네이비", "그레이"],
+  sizes: ["M", "L", "XL"],
+} as const;
+
+export const productPrice = (product: { price: string }) => Number(product.price.replace(/[^0-9]/g, "")) || 0;
+
+export function orderTotals(order: DemoPreOrder) {
+  const items = order.items.reduce((sum, entry) => sum + entry.amount, 0);
+  return { items, shipping: DEMO_SHIPPING.fee, total: items + DEMO_SHIPPING.fee };
+}
 
 const product = (index: number) => NANDAPICK.products[index];
 const price = (index: number) => Number(product(index).price.replace(/[^0-9]/g, ""));
@@ -74,6 +112,8 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     status: "UNPAID",
     minutesAgo: 12,
     items: [item(0, "화이트/L", 2), item(1, "블랙/M")],
+    paymentDeadline: "26.11.20 08:42",
+    addressConfirmed: true,
   },
   {
     id: "P202611200000000002",
@@ -81,6 +121,7 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     status: "CANCELED",
     minutesAgo: 3 * 60,
     items: [item(7, "차콜/L")],
+    round: 1,
   },
   {
     id: "P202611190000000003",
@@ -88,6 +129,7 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     status: "PAID",
     minutesAgo: 14 * 60,
     items: [item(3, "그레이/XL", 1, 2000)],
+    round: 2,
   },
   {
     id: "P202611180000000004",
