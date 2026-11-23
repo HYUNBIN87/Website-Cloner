@@ -75,6 +75,13 @@
   line-height: 22.4px;
 }
 
+.optionHint {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(130, 141, 134);
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -512,13 +519,6 @@
 /* The standalone band (expired orders) is not inside the rounded .pay box. */
 .content > .payDeadline {
   border-radius: 12px;
-}
-
-.payRule {
-  margin-left: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  opacity: 0.85;
 }
 
 /* 주문서 정보 footer */

@@ -1,13 +1,8 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { fillOnboardingText, type StoreSettings } from "../data/store-settings";
 import styles from "./overlays.module.css";
-
-const STEPS = [
-  { emoji: "📢", title: null },
-  { emoji: "🍀", title: "취소 찬스" },
-  { emoji: "⏰", title: "결제 마감" },
-] as const;
 
 /** Same storage key and shape the source uses to remember a completed onboarding per time deal. */
 export const ONBOARDING_STORAGE_KEY = "profile-live-room-onboarding";
@@ -40,18 +35,18 @@ function markCompleted(timeDealId: string) {
 
 export function RoomOnboarding({
   timeDealId,
-  notice,
-  paymentWindow,
+  settings,
   onDone,
 }: {
   timeDealId: string;
-  notice: string;
-  /** The store's payment window as text ("30분", "24시간"). The source store showed 24시간. */
-  paymentWindow: string;
+  /** The three steps (emoji, title, text) come from the store's 입장 안내 setting. */
+  settings: StoreSettings;
   onDone: () => void;
 }) {
   const [step, setStep] = useState(0);
-  const last = STEPS.length - 1;
+  const steps = settings.onboarding;
+  const last = steps.length - 1;
+  const current = steps[step];
 
   const next = () => {
     if (step < last) {
@@ -73,10 +68,10 @@ export function RoomOnboarding({
         </div>
 
         <div className={styles.stepper} aria-hidden="true">
-          {STEPS.map((item, index) => {
+          {steps.map((item, index) => {
             const state = index === step ? styles.stepDotActive : index < step ? styles.stepDotDone : "";
             return (
-              <Fragment key={item.emoji}>
+              <Fragment key={index}>
                 {index > 0 && (
                   <div className={`${styles.stepLine} ${index <= step ? styles.stepLineDone : ""}`} />
                 )}
@@ -90,32 +85,21 @@ export function RoomOnboarding({
         </div>
 
         <div className={styles.stepCard}>
-          {step === 0 && <p className={styles.stepText}>{notice}</p>}
-          {step === 1 && (
+          {current.title !== null && (
             <>
               <div className={styles.stepHead}>
-                <span className={styles.stepEmoji}>🍀</span>
-                <p className={styles.stepTitle}>취소 찬스</p>
+                <span className={styles.stepEmoji}>{current.emoji}</span>
+                <p className={styles.stepTitle}>{current.title}</p>
               </div>
               <span className={styles.stepDivider} />
-              <p className={styles.stepText}>
-                결제하기 전이라면 담아둔 상품을 <strong>최대 5회</strong> 취소할 수 있어요.
-              </p>
             </>
           )}
-          {step === 2 && (
-            <>
-              <div className={styles.stepHead}>
-                <span className={styles.stepEmoji}>⏰</span>
-                <p className={styles.stepTitle}>결제 마감</p>
-              </div>
-              <span className={styles.stepDivider} />
-              <p className={styles.stepText}>
-                상품을 담은 뒤 <strong>{paymentWindow}</strong> 안에 결제하지 않으면 주문서가 만료돼 결제할 수
-                없어요.
-              </p>
-            </>
-          )}
+          <p className={styles.stepText}>
+            {/* `**bold**` in the setting text becomes the highlighted phrase. */}
+            {fillOnboardingText(current.text, settings)
+              .split("**")
+              .map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part))}
+          </p>
         </div>
 
         <div className={styles.stepActions}>
@@ -125,7 +109,7 @@ export function RoomOnboarding({
             </button>
           )}
           <button type="button" className={styles.nextButton} onClick={next}>
-            확인했어요 · {step === last ? "입장하기" : `${step + 1}/${STEPS.length}`}
+            확인했어요 · {step === last ? "입장하기" : `${step + 1}/${steps.length}`}
           </button>
         </div>
       </div>

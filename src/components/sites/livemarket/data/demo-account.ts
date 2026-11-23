@@ -52,13 +52,20 @@ export type DemoPreOrder = {
   id: string;
   /** "🔴 yy.MM.dd HH:mm 라이브" or "⏰ yy.MM.dd HH:mm 타임딜", as the source labels them. */
   label: string;
-  /** Stored status. 기한 만료 is not stored: it is derived from the store's payment deadline. */
+  /** Stored status. 기한 만료 is not stored: an unpaid order past its stored deadline shows as expired. */
   status: Exclude<PreOrderStatus, "EXPIRED">;
   items: DemoPreOrderItem[];
   /** Built-in orders: minutes before the page was opened. */
   minutesAgo?: number;
+  /** Built-in orders: minutes from the order to its payment deadline, fixed like a stored deadline. */
+  paymentWindowMinutes?: number;
   /** Orders placed in the demo room: ISO time of the order. */
   orderedAt?: string;
+  /**
+   * Orders placed in the demo room: ISO payment deadline, computed from the store setting when
+   * the order was placed. Later setting changes do not move it.
+   */
+  paymentDeadline?: string;
   /** Absent for orders placed in a regular live. */
   timeDeal?: { startedAt: string; title: string };
   /** 배송 요청사항 typed by the buyer. */
@@ -116,6 +123,7 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     label: "🔴 26.11.20 08:00 라이브",
     status: "UNPAID",
     minutesAgo: 12,
+    paymentWindowMinutes: 24 * 60,
     items: [item(0, "화이트/L", 2), item(1, "블랙/M")],
     addressConfirmed: true,
   },
@@ -124,6 +132,7 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     label: "⏰ 26.11.19 12:00 타임딜",
     status: "CANCELED",
     minutesAgo: 3 * 60,
+    paymentWindowMinutes: 24 * 60,
     items: [item(7, "차콜/L")],
     timeDeal: { startedAt: "2026-11-19T12:00", title: "1119 점심 타임딜" },
   },
@@ -132,15 +141,17 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     label: "⏰ 26.11.19 20:00 타임딜",
     status: "PAID",
     minutesAgo: 14 * 60,
+    paymentWindowMinutes: 24 * 60,
     items: [item(3, "그레이/XL", 1, 2000)],
     timeDeal: { startedAt: "2026-11-19T20:00", title: "1119 저녁 타임딜" },
   },
   {
     id: "P202611180000000004",
     label: "🔴 26.11.18 10:00 라이브",
-    // Unpaid for two days: shown as 기한 만료 under either payment-deadline setting.
+    // Unpaid for two days with a one-day window: shown as 기한 만료.
     status: "UNPAID",
     minutesAgo: 2 * 24 * 60,
+    paymentWindowMinutes: 24 * 60,
     items: [item(13, "아이보리/M")],
   },
 ];

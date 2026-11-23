@@ -15,7 +15,7 @@ import {
 import { demoOrders, type ResolvedPreOrder } from "../data/demo-orders";
 import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK } from "../data/nandapick";
-import { paymentDeadlineRuleText, useStoreSettings } from "../data/store-settings";
+import { formatStoreAddress, useStoreSettings } from "../data/store-settings";
 import { DepositSheet } from "./DepositSheet";
 import styles from "./order.module.css";
 
@@ -110,6 +110,16 @@ export function PreOrderContent({ order }: { order: ResolvedPreOrder }) {
             )}
           </ul>
         )}
+        <dl className={styles.info}>
+          <div>
+            <dt>발송지</dt>
+            <dd>{formatStoreAddress(settings.shipFrom)}</dd>
+          </div>
+          <div>
+            <dt>반품지</dt>
+            <dd>{formatStoreAddress(settings.returnTo)}</dd>
+          </div>
+        </dl>
         <label className={styles.request}>
           <span>요청사항</span>
           <textarea
@@ -150,7 +160,6 @@ export function PreOrderContent({ order }: { order: ResolvedPreOrder }) {
           </div>
           <p className={styles.payDeadline}>
             <span aria-hidden="true">⏰</span> 결제 마감 <strong>{deadline}</strong>
-            <span className={styles.payRule}>({paymentDeadlineRuleText(settings.paymentDeadline)})</span>
           </p>
         </section>
       )}

@@ -10,7 +10,7 @@ import { demoOrders, latestRoomOrder, useDemoOrders } from "../data/demo-orders"
 import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK, ROOM_LOGIN_URL, type Product } from "../data/nandapick";
 import { nextFakeMessage, ownPurchaseMessage, seedMessages, type ChatMessage } from "../data/room-chat";
-import { paymentWindowText, useStoreSettings } from "../data/store-settings";
+import { maxOrderQuantity, useStoreSettings } from "../data/store-settings";
 import { ROUTES } from "../data/routes";
 import { SELLERS } from "../data/sellers";
 import { BottomSheet } from "../live/BottomSheet";
@@ -107,7 +107,7 @@ export function LiveRoom() {
   /** The item joins the time-deal order, the purchase line appears in chat, then the pay sheet opens. */
   const placeOrder = (product: Product, option: string, quantity: number) => {
     if (!session) return;
-    const orderId = demoOrders.addItem(product, option, quantity, settings.paymentDeadline);
+    const orderId = demoOrders.addItem(product, option, quantity, settings);
     sequence.current += 1;
     const message = ownPurchaseMessage(
       `mine-${sequence.current}`,
@@ -206,7 +206,7 @@ export function LiveRoom() {
         router.push(session ? ROUTES.my : ROOM_LOGIN_URL);
         break;
       case "inquiry":
-        window.open(store.customerCenter, "_blank", "noopener,noreferrer");
+        window.open(settings.customerCenterUrl, "_blank", "noopener,noreferrer");
         break;
       case "chat":
         setChatVisible((visible) => !visible);
@@ -267,17 +267,17 @@ export function LiveRoom() {
             <button type="button" className={styles.marquee} onClick={() => setOverlay({ kind: "notice" })}>
               <div className={styles.marqueeViewport}>
                 <div className={styles.marqueeTrack}>
-                  <span>{store.notice.replace(/\n/g, " ")}</span>
-                  <span aria-hidden="true">{store.notice.replace(/\n/g, " ")}</span>
+                  <span>{settings.notice.replace(/\n/g, " ")}</span>
+                  <span aria-hidden="true">{settings.notice.replace(/\n/g, " ")}</span>
                 </div>
               </div>
             </button>
           </div>
           <div className={`${styles.topRow} ${styles.row3}`}>
-            <div className={styles.cancelChip} aria-label="취소찬스 5회">
+            <div className={styles.cancelChip} aria-label={`취소찬스 ${settings.cancelChances}회`}>
               <span aria-hidden="true">🍀</span>
               <span>취소찬스</span>
-              <span>5</span>
+              <span>{settings.cancelChances}</span>
             </div>
           </div>
         </div>
@@ -406,7 +406,7 @@ export function LiveRoom() {
 
       {overlay?.kind === "notice" && (
         <BottomSheet title="공지" subtitle={<SellerSubtitle />} onClose={close}>
-          <p className={sheet.text}>{store.notice}</p>
+          <p className={sheet.text}>{settings.notice}</p>
         </BottomSheet>
       )}
       {overlay?.kind === "products" && (
@@ -424,6 +424,7 @@ export function LiveRoom() {
       {overlay?.kind === "option" && (
         <OptionSheet
           product={overlay.product}
+          maxQuantity={maxOrderQuantity(settings)}
           onSubmit={(option, quantity) => placeOrder(overlay.product, option, quantity)}
           onClose={close}
         />
@@ -439,12 +440,7 @@ export function LiveRoom() {
         />
       )}
       {onboardingOpen && (
-        <RoomOnboarding
-          timeDealId={TIME_DEAL_ID}
-          notice={store.notice}
-          paymentWindow={paymentWindowText(settings.paymentDeadline)}
-          onDone={() => setOnboardingOpen(false)}
-        />
+        <RoomOnboarding timeDealId={TIME_DEAL_ID} settings={settings} onDone={() => setOnboardingOpen(false)} />
       )}
     </div>
   );

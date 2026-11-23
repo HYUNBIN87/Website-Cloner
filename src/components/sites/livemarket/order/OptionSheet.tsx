@@ -7,15 +7,18 @@ import type { Product } from "../data/nandapick";
 import { BottomSheet } from "../live/BottomSheet";
 import styles from "./order.module.css";
 
-const MAX_QUANTITY = 99;
-
-/** Color / size / quantity picker opened by "주문서 담기". The options are fake (see DEMO_OPTIONS). */
+/**
+ * Color / size / quantity picker opened by "주문서 담기". The options are fake (see DEMO_OPTIONS);
+ * the quantity limit is the store's 1회 주문 최대 수량 setting.
+ */
 export function OptionSheet({
   product,
+  maxQuantity,
   onSubmit,
   onClose,
 }: {
   product: Product;
+  maxQuantity: number;
   onSubmit: (option: string, quantity: number) => void;
   onClose: () => void;
 }) {
@@ -64,7 +67,9 @@ export function OptionSheet({
       <ChipGroup label="사이즈" values={DEMO_OPTIONS.sizes} selected={size} onSelect={setSize} />
 
       <div className={styles.optionGroup}>
-        <p className={styles.optionLabel}>수량</p>
+        <p className={styles.optionLabel}>
+          수량 <span className={styles.optionHint}>1회 최대 {maxQuantity}개</span>
+        </p>
         <div className={styles.stepper}>
           <button
             type="button"
@@ -77,8 +82,8 @@ export function OptionSheet({
           <span aria-live="polite">{quantity}</span>
           <button
             type="button"
-            onClick={() => setQuantity((value) => Math.min(MAX_QUANTITY, value + 1))}
-            disabled={quantity >= MAX_QUANTITY}
+            onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+            disabled={quantity >= maxQuantity}
             aria-label="수량 늘리기"
           >
             +

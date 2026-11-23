@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { Icon } from "../Icon";
 import { LOGIN_URL, NANDAPICK, SECRET_ROOM_URL, type Product } from "../data/nandapick";
+import { useStoreSettings } from "../data/store-settings";
 import { BottomSheet } from "./BottomSheet";
 import { ProductCard } from "./ProductCard";
 import { LiveVideo } from "./LiveVideo";
@@ -17,6 +18,7 @@ type Sheet = { kind: "notice" } | { kind: "intro" } | { kind: "replay"; product:
 const store = NANDAPICK;
 
 export function ProfileLive() {
+  const settings = useStoreSettings(store.slug);
   const [query, setQuery] = useState("");
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [openSheet, setOpenSheet] = useState<Sheet>(null);
@@ -94,10 +96,10 @@ export function ProfileLive() {
 
           <div className={styles.sideColumn}>
             <div className={styles.socials}>
-              <a href={store.socials.instagram} className={styles.social} aria-label="Instagram">
+              <a href={settings.socials.instagram} className={styles.social} aria-label="Instagram">
                 <Icon name="instagram" width={24} />
               </a>
-              <a href={store.socials.youtube} className={styles.social} aria-label="YouTube">
+              <a href={settings.socials.youtube} className={styles.social} aria-label="YouTube">
                 <Image
                   src="/sites/livemarket/img/yt_icon_red_digital.png"
                   alt="YouTube"
@@ -105,10 +107,10 @@ export function ProfileLive() {
                   height={20}
                 />
               </a>
-              <a href={store.socials.tiktok} className={styles.social} aria-label="TikTok">
+              <a href={settings.socials.tiktok} className={styles.social} aria-label="TikTok">
                 <Icon name="tiktok" width={24} />
               </a>
-              <a href={store.socials.band} className={styles.social} aria-label="BAND">
+              <a href={settings.socials.band} className={styles.social} aria-label="BAND">
                 <Icon name="band" width={24} />
               </a>
             </div>
@@ -124,7 +126,7 @@ export function ProfileLive() {
                     <p>소개글</p>
                   </span>
                 </button>
-                <a href={store.customerCenter} className={`${styles.actionButton} ${styles.navy}`}>
+                <a href={settings.customerCenterUrl} className={`${styles.actionButton} ${styles.navy}`}>
                   <span>
                     <Icon name="headset" width={16} />
                     <p>고객센터</p>
@@ -154,7 +156,7 @@ export function ProfileLive() {
               <span>공지</span>
             </div>
             <div className={styles.noticeBody}>
-              <p className={styles.noticeText}>{store.notice}</p>
+              <p className={styles.noticeText}>{settings.notice}</p>
               <span className={styles.noticeMore}>(...더보기)</span>
             </div>
           </button>
@@ -260,12 +262,12 @@ export function ProfileLive() {
 
       {openSheet?.kind === "notice" && (
         <BottomSheet title="공지" subtitle={<SellerSubtitle />} onClose={close}>
-          <p className={sheet.text}>{store.notice}</p>
+          <p className={sheet.text}>{settings.notice}</p>
         </BottomSheet>
       )}
       {openSheet?.kind === "intro" && (
         <BottomSheet title="소개글" subtitle={<SellerSubtitle />} onClose={close}>
-          <p className={sheet.text}>{store.intro}</p>
+          <p className={sheet.text}>{settings.intro}</p>
         </BottomSheet>
       )}
       {openSheet?.kind === "replay" && <ReplaySheet product={openSheet.product} loginUrl={LOGIN_URL} onClose={close} />}

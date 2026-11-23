@@ -10,14 +10,14 @@ import {
   type PreOrderStatus,
 } from "./demo-account";
 import type { Product } from "./nandapick";
-import { paymentDeadline, useStoreSettings, type PaymentDeadlinePolicy } from "./store-settings";
+import { maxOrderQuantity, paymentDeadline, type StoreSettings } from "./store-settings";
 
 /**
  * Pre-orders created in the demo live room. Like the demo session, they live only in this
  * browser's localStorage; nothing is sent anywhere. Stored entries are either new orders or
  * edited copies of the built-in fake orders (same id).
  */
-const STORAGE_KEY = "livemarket-clone-demo-orders-v2";
+const STORAGE_KEY = "livemarket-clone-demo-orders-v3";
 
 const BUILT_IN_IDS = new Set(DEMO_PRE_ORDERS.map((order) => order.id));
 const listeners = new Set<() => void>();
@@ -72,7 +72,7 @@ function merge(stored: DemoPreOrder[]): DemoPreOrder[] {
 
 const isRoomOrder = (order: { id: string }) => !BUILT_IN_IDS.has(order.id);
 
-/** An order with everything that depends on the clock and the store's payment deadline filled in. */
+/** An order with everything that depends on the clock filled in. */
 export type ResolvedPreOrder = Omit<DemoPreOrder, "status" | "minutesAgo"> & {
   /** Effective status: an unpaid order past its deadline is 기한 만료. */
   status: PreOrderStatus;
@@ -86,20 +86,25 @@ function orderedAtMs(order: DemoPreOrder) {
   return Number.isNaN(parsed) ? sessionStart() - (order.minutesAgo ?? 0) * 60_000 : parsed;
 }
 
-function deadlineOf(order: DemoPreOrder, policy: PaymentDeadlinePolicy) {
-  return paymentDeadline(new Date(orderedAtMs(order)), policy).getTime();
+/**
+ * The deadline saved with the order. It never consults the current store settings, so changing
+ * the payment deadline setting leaves existing orders alone.
+ */
+function deadlineOf(order: DemoPreOrder) {
+  const stored = order.paymentDeadline ? Date.parse(order.paymentDeadline) : NaN;
+  return Number.isNaN(stored) ? orderedAtMs(order) + (order.paymentWindowMinutes ?? 0) * 60_000 : stored;
 }
 
 /** A deposit check in progress keeps the order open; otherwise the deadline expires it. */
-const isExpired = (order: DemoPreOrder, policy: PaymentDeadlinePolicy, now: number) =>
-  order.status === "UNPAID" && !order.depositRequested && now > deadlineOf(order, policy);
+const isExpired = (order: DemoPreOrder, now: number) =>
+  order.status === "UNPAID" && !order.depositRequested && now > deadlineOf(order);
 
-function resolve(order: DemoPreOrder, policy: PaymentDeadlinePolicy, now: number): ResolvedPreOrder {
+function resolve(order: DemoPreOrder, now: number): ResolvedPreOrder {
   return {
     ...order,
-    status: isExpired(order, policy, now) ? "EXPIRED" : order.status,
+    status: isExpired(order, now) ? "EXPIRED" : order.status,
     minutesAgo: Math.max(0, Math.floor((now - orderedAtMs(order)) / 60_000)),
-    deadline: deadlineOf(order, policy),
+    deadline: deadlineOf(order),
   };
 }
 
@@ -107,13 +112,12 @@ function resolve(order: DemoPreOrder, policy: PaymentDeadlinePolicy, now: number
 export function useDemoOrders(): ResolvedPreOrder[] | undefined {
   const raw = useSyncExternalStore<string | null | undefined>(subscribe, readRaw, () => undefined);
   const now = useNow();
-  const policy = useStoreSettings().paymentDeadline;
   return useMemo(
     () =>
       raw === undefined || now === undefined
         ? undefined
-        : merge(parse(raw)).map((order) => resolve(order, policy, now)),
-    [raw, now, policy],
+        : merge(parse(raw)).map((order) => resolve(order, now)),
+    [raw, now],
   );
 }
 
@@ -124,7 +128,7 @@ export function latestRoomOrder(orders: readonly ResolvedPreOrder[] | undefined)
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
-function newOrder(now: Date): DemoPreOrder {
+function newOrder(now: Date, settings: StoreSettings): DemoPreOrder {
   const day = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
   return {
     // Same shape as the source's order numbers; the digits are just this browser's clock.
@@ -132,6 +136,8 @@ function newOrder(now: Date): DemoPreOrder {
     label: DEMO_TIME_DEAL.label,
     status: "UNPAID",
     orderedAt: now.toISOString(),
+    // Saved once, from the setting in force at order time.
+    paymentDeadline: paymentDeadline(now, settings.paymentDeadline).toISOString(),
     items: [],
     timeDeal: { startedAt: DEMO_TIME_DEAL.startedAt, title: DEMO_TIME_DEAL.title },
   };
@@ -139,20 +145,20 @@ function newOrder(now: Date): DemoPreOrder {
 
 export const demoOrders = {
   /**
-   * Mirrors the source's pre-order upsert: the item joins the open room order (unpaid, not
-   * expired, deposit check not requested yet) or starts a new one. Returns the order id.
+   * Mirrors the source's pre-order upsert. With the store's 주문서 합치기 setting on, the item
+   * joins the room order that is still unpaid and not expired (keeping that order's deadline);
+   * otherwise every add starts a new order sheet. Returns the order id.
    */
-  addItem(product: Product, option: string, quantity: number, policy: PaymentDeadlinePolicy): string {
+  addItem(product: Product, option: string, requested: number, settings: StoreSettings): string {
     const now = new Date();
+    const quantity = Math.min(Math.max(1, requested), maxOrderQuantity(settings));
     const stored = parse(readRaw());
-    const open = stored.find(
-      (order) =>
-        isRoomOrder(order) &&
-        order.status === "UNPAID" &&
-        !order.depositRequested &&
-        !isExpired(order, policy, now.getTime()),
-    );
-    const order = open ?? newOrder(now);
+    const open = settings.mergeOrders
+      ? stored.find(
+          (order) => isRoomOrder(order) && order.status === "UNPAID" && !isExpired(order, now.getTime()),
+        )
+      : undefined;
+    const order = open ?? newOrder(now, settings);
     const unitPrice = productPrice(product);
     const existing = order.items.find((entry) => entry.name === product.name && entry.option === option);
     const items = existing
@@ -162,7 +168,8 @@ export const demoOrders = {
             : entry,
         )
       : [...order.items, { name: product.name, image: product.image, option, quantity, amount: unitPrice * quantity }];
-    const next = { ...order, items };
+    // The amount changed, so an earlier deposit-check request no longer matches it.
+    const next = { ...order, items, depositRequested: false };
     write(open ? stored.map((entry) => (entry === open ? next : entry)) : [next, ...stored]);
     return next.id;
   },

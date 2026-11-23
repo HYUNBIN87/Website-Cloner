@@ -166,15 +166,13 @@ The source's order screens are login-only and were not captured, so this flow is
 | 주문서 담기 (product bar, product sheet, replay sheet) | Logged out: login redirect as before. Demo session: 옵션 선택 sheet (컬러, 사이즈, 수량, 합계, 주문서 담기). Options are the same fake set for every product |
 | Add | Item is upserted into the open time-deal pre-order (localStorage `livemarket-clone-demo-orders`), the buyer's own "구매 성공! [ 상품명 \| 옵션 - N개 총 N원 ]" line is appended to the chat, and the 타임딜 주문 결제 sheet opens |
 | 주문자정보/배송지 확인 popup | Shown over the sheet until 여기로 주문 is pressed, and again from 수정하기. 배송지 변경 only shows a notice (the clone has one fake address) |
-| 타임딜 주문 결제 sheet | Store strip, status chip, "yyyy.MM.dd. HH:mm 시작 타임딜" + time-deal title, 주문 품목, 배송 안내 (택배 4,000원, 조건부 무료, 도서산간 추가 배송비) + 요청사항, 결제 금액, 결제하기 (black box, "결제수단을 선택하세요", white 무통장입금 button, pink 결제 마감 band), then 주문서 정보 (주문서 번호, 닉네임, 배송지, 수정하기) |
+| 타임딜 주문 결제 sheet | Store strip, status chip, "yyyy.MM.dd. HH:mm 시작 타임딜" + time-deal title, 주문 품목, 배송 안내 (택배 4,000원, 조건부 무료, 도서산간 추가 배송비, 발송지, 반품지) + 요청사항, 결제 금액, 결제하기 (black box, "결제수단을 선택하세요", white 무통장입금 button, pink 결제 마감 band), then 주문서 정보 (주문서 번호, 닉네임, 배송지, 수정하기) |
 | 무통장입금 → "입금 후 결제완료까지" sheet | 최종 결제금액, 계좌정보 (예금주, 입금계좌), black 입금계좌 복사하기, 입금시 주문자명 (green correct example vs red struck-through wrong example + rule), 입금완료 확인요청 with a 필수아님 badge |
 | Rail 주문서 | Demo session: reopens the latest unpaid room order, or a toast if none |
 | `/pre-order/{id}` | Same content as the sheet as a page, for built-in and room orders. 결제하기 appears only while 미결제. Nothing ever becomes 결제완료: there is no seller side |
 
-### Store settings (`src/components/sites/livemarket/data/store-settings.ts`)
+### Store settings
 
-Seller-editable values are read only through `getStoreSettings` / `useStoreSettings`, so an admin-backed source can replace the file later.
+Seller-editable values (payment deadline, shipping fees, cancel chances, deposit account, max quantity, order merging, notice, onboarding steps, intro, SNS links, customer center, ship-from and return addresses) live in `src/components/sites/livemarket/data/store-settings.ts` and are read only through `getStoreSettings` / `useStoreSettings`. The item list, demo values, the screens each item drives and the rules are in [store-settings.md](store-settings.md). All values are fake, including the notice (the captured notice text is no longer shown).
 
-- `paymentDeadline`: `{ type: "MINUTES_AFTER_ORDER", minutes }` (주문 후 N분 이내) or `{ type: "NEXT_DAY_SAME_TIME" }` (주문 다음 날 같은 시각까지). Demo default: 30 minutes. The 결제 마감 band, the 기한 만료 status (order list and detail) and the onboarding's 결제 마감 step all derive from it; the deadline is computed from the order time on read, not stored on the order. The captured source onboarding said 24시간, so the real store likely uses the next-day option.
-- `shipping`: fee 4,000원, free from 100,000원, remote-area surcharge 3,000원. The two thresholds are invented demo values.
-- `bankAccount`: fake deposit account.
+The payment deadline defaults to the next day at the same time, matching the source onboarding's 24시간. It is computed once when an order is placed and stored on the order, so later setting changes do not move existing deadlines.

@@ -14,22 +14,13 @@ export type Product = {
 };
 
 // Store profile layout/content observed on https://livemarket.pro/nandapick/profile-live (2026-11-20).
-// Personal data (seller name, avatar, contacts, address, SNS/Kakao handles) is replaced with fake values.
+// Personal data (seller name, avatar, contacts, address) is replaced with fake values.
+// Seller-editable values (notice, intro, SNS links, customer center, ...) live in store-settings.ts.
 export const NANDAPICK = {
   slug: "nandapick",
   name: "데모샵",
   avatar: "/sites/livemarket/img/demo-store-avatar.png",
   liveTitle: "1120♡굿모닝♡",
-  notice: snapshot.notice,
-  intro:
-    "📺 특가 라이브방송 📺 데모샵 입니다.\n👉 믿고 보는 <데모샵>, 합리적인 가격과 솔직한 리뷰!\n👉 채팅으로 함께 소통하며 즐기는 생생한 라이브 🎥\n단골맺기는 사랑입니다~💕\n라이브에서 만나요💙☝💙 ",
-  socials: {
-    instagram: "https://www.instagram.com/",
-    youtube: "https://www.youtube.com/",
-    tiktok: "https://www.tiktok.com/",
-    band: "https://band.us/",
-  },
-  customerCenter: "https://pf.kakao.com/",
   business: {
     company: "데모상점(DEMO SHOP)",
     ceo: "홍길동",
