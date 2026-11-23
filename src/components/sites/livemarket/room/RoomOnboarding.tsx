@@ -41,10 +41,13 @@ function markCompleted(timeDealId: string) {
 export function RoomOnboarding({
   timeDealId,
   notice,
+  paymentWindow,
   onDone,
 }: {
   timeDealId: string;
   notice: string;
+  /** The store's payment window as text ("30분", "24시간"). The source store showed 24시간. */
+  paymentWindow: string;
   onDone: () => void;
 }) {
   const [step, setStep] = useState(0);
@@ -108,7 +111,7 @@ export function RoomOnboarding({
               </div>
               <span className={styles.stepDivider} />
               <p className={styles.stepText}>
-                상품을 담은 뒤 <strong>24시간</strong> 안에 결제하지 않으면 주문서가 만료돼 결제할 수
+                상품을 담은 뒤 <strong>{paymentWindow}</strong> 안에 결제하지 않으면 주문서가 만료돼 결제할 수
                 없어요.
               </p>
             </>

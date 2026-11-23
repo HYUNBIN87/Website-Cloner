@@ -10,6 +10,7 @@ import { demoOrders, latestRoomOrder, useDemoOrders } from "../data/demo-orders"
 import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK, ROOM_LOGIN_URL, type Product } from "../data/nandapick";
 import { nextFakeMessage, ownPurchaseMessage, seedMessages, type ChatMessage } from "../data/room-chat";
+import { paymentWindowText, useStoreSettings } from "../data/store-settings";
 import { ROUTES } from "../data/routes";
 import { SELLERS } from "../data/sellers";
 import { BottomSheet } from "../live/BottomSheet";
@@ -90,6 +91,7 @@ export function LiveRoom() {
   const sequence = useRef(0);
   const session = useDemoSession();
   const orders = useDemoOrders();
+  const settings = useStoreSettings(store.slug);
 
   const pinned = store.products.find((product) => product.pinned) ?? store.products[0];
   const followers = SELLERS.find((seller) => seller.slug === store.slug)?.followers ?? 0;
@@ -105,7 +107,7 @@ export function LiveRoom() {
   /** The item joins the time-deal order, the purchase line appears in chat, then the pay sheet opens. */
   const placeOrder = (product: Product, option: string, quantity: number) => {
     if (!session) return;
-    const orderId = demoOrders.addItem(product, option, quantity);
+    const orderId = demoOrders.addItem(product, option, quantity, settings.paymentDeadline);
     sequence.current += 1;
     const message = ownPurchaseMessage(
       `mine-${sequence.current}`,
@@ -437,7 +439,12 @@ export function LiveRoom() {
         />
       )}
       {onboardingOpen && (
-        <RoomOnboarding timeDealId={TIME_DEAL_ID} notice={store.notice} onDone={() => setOnboardingOpen(false)} />
+        <RoomOnboarding
+          timeDealId={TIME_DEAL_ID}
+          notice={store.notice}
+          paymentWindow={paymentWindowText(settings.paymentDeadline)}
+          onDone={() => setOnboardingOpen(false)}
+        />
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import { NANDAPICK } from "./nandapick";
 import { SELLERS } from "./sellers";
+import { shippingFeeFor, type ShippingSettings } from "./store-settings";
 
 /*
  * Fake account shown on the logged-in screens. The layout follows the logged-in pages observed
@@ -51,13 +52,15 @@ export type DemoPreOrder = {
   id: string;
   /** "🔴 yy.MM.dd HH:mm 라이브" or "⏰ yy.MM.dd HH:mm 타임딜", as the source labels them. */
   label: string;
-  status: PreOrderStatus;
-  minutesAgo: number;
+  /** Stored status. 기한 만료 is not stored: it is derived from the store's payment deadline. */
+  status: Exclude<PreOrderStatus, "EXPIRED">;
   items: DemoPreOrderItem[];
-  /** 타임딜 회차. Absent for orders placed in a regular live. */
-  round?: number;
-  /** "yy.MM.dd HH:mm" — shown while the order is unpaid. */
-  paymentDeadline?: string;
+  /** Built-in orders: minutes before the page was opened. */
+  minutesAgo?: number;
+  /** Orders placed in the demo room: ISO time of the order. */
+  orderedAt?: string;
+  /** Absent for orders placed in a regular live. */
+  timeDeal?: { startedAt: string; title: string };
   /** 배송 요청사항 typed by the buyer. */
   request?: string;
   /** The buyer pressed "여기로 주문" on the address confirmation popup. */
@@ -67,18 +70,11 @@ export type DemoPreOrder = {
 };
 
 /** Fake time deal running in the demo live room. */
-export const DEMO_TIME_DEAL = { id: "demo-time-deal", round: 3 } as const;
-
-export const DEMO_SHIPPING = { method: "택배", fee: 4000 } as const;
-
-/** Unpaid orders must be paid within 30 minutes, as the store notice says. */
-export const PAYMENT_WINDOW_MINUTES = 30;
-
-/** Fake deposit account: the bank, number and holder are all invented. */
-export const DEMO_BANK_ACCOUNT = {
-  bank: "예시은행",
-  number: "000-000-000000",
-  holder: "데모상점",
+export const DEMO_TIME_DEAL = {
+  id: "demo-time-deal",
+  title: NANDAPICK.liveTitle,
+  startedAt: "2026-11-20T08:00",
+  label: "⏰ 26.11.20 08:00 타임딜",
 } as const;
 
 /** Fake color/size options: the store snapshot has no option data. */
@@ -89,9 +85,18 @@ export const DEMO_OPTIONS = {
 
 export const productPrice = (product: { price: string }) => Number(product.price.replace(/[^0-9]/g, "")) || 0;
 
-export function orderTotals(order: DemoPreOrder) {
+export function orderTotals(order: Pick<DemoPreOrder, "items">, shipping: ShippingSettings) {
   const items = order.items.reduce((sum, entry) => sum + entry.amount, 0);
-  return { items, shipping: DEMO_SHIPPING.fee, total: items + DEMO_SHIPPING.fee };
+  const fee = shippingFeeFor(items, shipping);
+  return { items, shipping: fee, total: items + fee };
+}
+
+const pad = (value: number) => String(value).padStart(2, "0");
+
+/** "2026.11.20. 08:00" */
+export function formatDateTime(value: Date | number | string) {
+  const date = new Date(value);
+  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}. ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 const product = (index: number) => NANDAPICK.products[index];
@@ -112,7 +117,6 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     status: "UNPAID",
     minutesAgo: 12,
     items: [item(0, "화이트/L", 2), item(1, "블랙/M")],
-    paymentDeadline: "26.11.20 08:42",
     addressConfirmed: true,
   },
   {
@@ -121,7 +125,7 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     status: "CANCELED",
     minutesAgo: 3 * 60,
     items: [item(7, "차콜/L")],
-    round: 1,
+    timeDeal: { startedAt: "2026-11-19T12:00", title: "1119 점심 타임딜" },
   },
   {
     id: "P202611190000000003",
@@ -129,12 +133,13 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
     status: "PAID",
     minutesAgo: 14 * 60,
     items: [item(3, "그레이/XL", 1, 2000)],
-    round: 2,
+    timeDeal: { startedAt: "2026-11-19T20:00", title: "1119 저녁 타임딜" },
   },
   {
     id: "P202611180000000004",
     label: "🔴 26.11.18 10:00 라이브",
-    status: "EXPIRED",
+    // Unpaid for two days: shown as 기한 만료 under either payment-deadline setting.
+    status: "UNPAID",
     minutesAgo: 2 * 24 * 60,
     items: [item(13, "아이보리/M")],
   },

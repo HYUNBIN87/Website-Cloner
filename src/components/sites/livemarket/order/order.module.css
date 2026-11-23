@@ -255,8 +255,7 @@
   gap: 8px;
 }
 
-.chip,
-.roundChip {
+.chip {
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 12px;
@@ -264,49 +263,32 @@
   line-height: 18px;
 }
 
-.roundChip {
-  background: rgba(20, 48, 112, 0.08);
-  color: rgb(20, 48, 112);
+.timeDeal {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgb(240, 240, 240);
+}
+
+.timeDealStart {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 19.2px;
+  color: rgb(54, 70, 58);
+}
+
+.timeDealTitle {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  color: rgb(3, 34, 12);
 }
 
 .meta {
   font-size: 12px;
   line-height: 19.2px;
   color: rgb(130, 141, 134);
-}
-
-.address {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.addressRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.addressRow p {
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 22.4px;
-  color: rgb(68, 68, 68);
-}
-
-.addressTag {
-  width: 52px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  padding: 0 0 0 0;
-  border-radius: 999px;
-  background: rgb(242, 242, 242);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 18px;
-  color: rgb(102, 102, 102);
-  text-align: center;
 }
 
 .item {
@@ -430,51 +412,124 @@
   background: rgb(248, 248, 248);
 }
 
-.method {
+/* Shipping guide */
+.shippingNotes {
   display: flex;
-  height: 48px;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   gap: 6px;
-  border: 1.5px solid rgb(20, 48, 112);
+  margin: 0;
+  padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(20, 48, 112, 0.06);
-  font-size: 14px;
-  font-weight: 700;
-  color: rgb(20, 48, 112);
-}
-
-.deadline {
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 19.2px;
-  color: rgb(180, 83, 9);
-}
-
-.deadline strong {
-  font-weight: 800;
-}
-
-.account {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
   background: rgb(245, 247, 246);
+  list-style: none;
 }
 
-.accountNumber {
+.shippingNotes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 19.2px;
+  color: rgb(68, 68, 68);
+}
+
+.freeChip,
+.remoteChip {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 19.2px;
+}
+
+.freeChip {
+  background: rgba(0, 188, 124, 0.12);
+  color: rgb(0, 140, 92);
+}
+
+.remoteChip {
+  background: rgb(232, 232, 232);
+  color: rgb(68, 68, 68);
+}
+
+/* 결제하기: black box, white method button, pink deadline band */
+.pay {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.payBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 16px 16px;
+  background: rgb(17, 17, 17);
+  color: #fff;
+}
+
+.payBox h3 {
   font-size: 16px;
   font-weight: 700;
   line-height: 24px;
-  color: rgb(30, 30, 30);
 }
 
-.copyButton {
-  height: 34px;
-  flex-shrink: 0;
+.payBox p {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.payMethod {
+  display: flex;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(17, 17, 17);
+}
+
+.payDeadline {
+  padding: 10px 16px;
+  background: rgb(255, 228, 232);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20.8px;
+  color: rgb(190, 24, 60);
+  text-align: center;
+}
+
+.payDeadline strong {
+  font-weight: 800;
+}
+
+/* The standalone band (expired orders) is not inside the rounded .pay box. */
+.content > .payDeadline {
+  border-radius: 12px;
+}
+
+.payRule {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* 주문서 정보 footer */
+.infoHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editButton {
+  height: 32px;
   padding: 0 12px;
   border: 1px solid rgb(30, 30, 30);
   border-radius: 8px;
@@ -482,21 +537,223 @@
   font-size: 12px;
   font-weight: 700;
   color: rgb(30, 30, 30);
-  white-space: nowrap;
 }
 
-.depositNote {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(232, 52, 10, 0.08);
-  font-size: 12px;
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.info > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.info dt {
+  width: 68px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 22.4px;
+  color: rgb(130, 141, 134);
+}
+
+.info dd {
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 19.2px;
+  line-height: 22.4px;
+  color: rgb(68, 68, 68);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 입금 후 결제완료까지 */
+.depositBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: rgb(30, 30, 30);
+}
+
+.depositTotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgb(245, 247, 246);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.depositTotal strong {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 30px;
   color: rgb(232, 52, 10);
 }
 
-.depositNote strong {
+.depositSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.depositSection h3 {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.accountInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+}
+
+.accountInfo > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.accountInfo dt {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(130, 141, 134);
+}
+
+.accountInfo dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgb(30, 30, 30);
+}
+
+.blackButton {
+  display: flex;
+  height: 50px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgb(17, 17, 17);
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.nameExamples {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.nameGood,
+.nameBad {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 2px solid;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.nameGood {
+  border-color: rgb(0, 188, 124);
+  background: rgba(0, 188, 124, 0.06);
+}
+
+.nameBad {
+  border-color: rgb(220, 38, 38);
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.nameGood span,
+.nameBad span {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 19.2px;
+}
+
+.nameGood span {
+  color: rgb(0, 140, 92);
+}
+
+.nameBad span {
+  color: rgb(220, 38, 38);
+}
+
+.nameGood strong,
+.nameBad strong {
+  max-width: 100%;
+  font-size: 18px;
   font-weight: 800;
+  line-height: 27px;
+  overflow-wrap: anywhere;
+}
+
+.nameBad strong {
+  color: rgb(153, 153, 153);
+}
+
+.nameRule {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20.8px;
+  color: rgb(68, 68, 68);
+}
+
+.requestButton {
+  display: flex;
+  height: 50px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgb(30, 30, 30);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(30, 30, 30);
+}
+
+.requestButton:disabled {
+  border-color: rgb(224, 224, 224);
+  background: rgb(242, 242, 242);
+  color: rgb(153, 153, 153);
+  cursor: default;
+}
+
+.optionalBadge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgb(242, 242, 242);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  color: rgb(102, 102, 102);
+}
+
+/* Address rows inside the confirmation popup */
+.modalAddress {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgb(245, 247, 246);
 }
 
 .requested {
@@ -544,12 +801,6 @@
   line-height: 22.4px;
   color: rgb(102, 102, 102);
   text-align: center;
-}
-
-.modalAddress {
-  padding: 12px;
-  border-radius: 12px;
-  background: rgb(245, 247, 246);
 }
 
 .modalNotice {
@@ -638,6 +889,7 @@
 }
 
 .content :where(p, span, h3),
+.depositBody :where(p, span, h3),
 .modal :where(p, span, h3),
 .optionBody :where(p, span) {
   word-break: keep-all;
@@ -650,4 +902,10 @@
   to {
     opacity: 1;
   }
+}
+
+.nameBad s {
+  text-decoration: line-through;
+  text-decoration-color: rgb(220, 38, 38);
+  text-decoration-thickness: 2px;
 }

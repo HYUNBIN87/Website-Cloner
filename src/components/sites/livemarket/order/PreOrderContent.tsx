@@ -1,48 +1,42 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   DEMO_ADDRESS,
-  DEMO_BANK_ACCOUNT,
-  DEMO_SHIPPING,
+  DEMO_USER,
   PRE_ORDER_STATUS,
+  formatDateTime,
   formatKRW,
   formatOrderedAgo,
   orderTotals,
-  type DemoPreOrder,
 } from "../data/demo-account";
-import { demoOrders } from "../data/demo-orders";
+import { demoOrders, type ResolvedPreOrder } from "../data/demo-orders";
+import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK } from "../data/nandapick";
+import { paymentDeadlineRuleText, useStoreSettings } from "../data/store-settings";
+import { DepositSheet } from "./DepositSheet";
 import styles from "./order.module.css";
 
 const REQUEST_MAX_LENGTH = 100;
 
 /**
- * Body shared by the room's "타임딜 주문 결제" sheet and the /pre-order/{id} page: store and
- * status, address, items, shipping, request, amounts, payment method and deposit guide.
+ * Body shared by the room's "타임딜 주문 결제" sheet and the /pre-order/{id} page: store, status
+ * and time deal, items, shipping guide, amounts, the 결제하기 box and the order info footer.
  * Every name, phone number, address and account shown here is fake.
  */
-export function PreOrderContent({ order }: { order: DemoPreOrder }) {
+export function PreOrderContent({ order }: { order: ResolvedPreOrder }) {
+  const settings = useStoreSettings();
+  const nickname = useDemoSession()?.nickname ?? DEMO_USER.nickname;
+  const { shipping } = settings;
   const status = PRE_ORDER_STATUS[order.status];
-  const totals = orderTotals(order);
+  const totals = orderTotals(order, shipping);
   const unpaid = order.status === "UNPAID";
-  const [copied, setCopied] = useState<"done" | "failed" | null>(null);
-
-  useEffect(() => {
-    if (!copied) return;
-    const id = setTimeout(() => setCopied(null), 2000);
-    return () => clearTimeout(id);
-  }, [copied]);
-
-  const copyAccount = async () => {
-    try {
-      await navigator.clipboard.writeText(`${DEMO_BANK_ACCOUNT.bank} ${DEMO_BANK_ACCOUNT.number}`);
-      setCopied("done");
-    } catch {
-      setCopied("failed");
-    }
-  };
+  const deadline = formatDateTime(order.deadline);
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(false);
+  const addressPopup = unpaid && (editingAddress || !order.addressConfirmed);
 
   return (
     <div className={styles.content}>
@@ -61,15 +55,16 @@ export function PreOrderContent({ order }: { order: DemoPreOrder }) {
           <span className={styles.chip} style={{ color: status.color, background: status.tint }}>
             {status.text}
           </span>
-          {order.round !== undefined && <span className={styles.roundChip}>타임딜 {order.round}회차</span>}
           <span className={styles.meta}>{formatOrderedAgo(order.minutesAgo)}</span>
         </div>
-        <span className={styles.meta}>주문서 {order.id}</span>
-      </section>
-
-      <section className={styles.card}>
-        <h3 className={styles.cardTitle}>주문자정보 / 배송지</h3>
-        <AddressBlock />
+        {order.timeDeal && (
+          <div className={styles.timeDeal}>
+            <p className={styles.timeDealStart}>
+              <span aria-hidden="true">⏰</span> {formatDateTime(order.timeDeal.startedAt)} 시작 타임딜
+            </p>
+            <p className={styles.timeDealTitle}>{order.timeDeal.title}</p>
+          </div>
+        )}
       </section>
 
       <section className={styles.card}>
@@ -96,9 +91,25 @@ export function PreOrderContent({ order }: { order: DemoPreOrder }) {
       <section className={styles.card}>
         <h3 className={styles.cardTitle}>배송 안내</h3>
         <div className={styles.line}>
-          <span>🚚 {DEMO_SHIPPING.method}</span>
-          <strong>{formatKRW(DEMO_SHIPPING.fee)}</strong>
+          <span>🚚 {shipping.method}</span>
+          <strong>{formatKRW(shipping.fee)}</strong>
         </div>
+        {(shipping.freeFrom !== null || shipping.remoteAreaFee !== null) && (
+          <ul className={styles.shippingNotes}>
+            {shipping.freeFrom !== null && (
+              <li>
+                <span className={styles.freeChip}>조건부 무료</span>
+                <span>{formatKRW(shipping.freeFrom)} 이상 구매 시 무료</span>
+              </li>
+            )}
+            {shipping.remoteAreaFee !== null && (
+              <li>
+                <span className={styles.remoteChip}>도서산간</span>
+                <span>제주·도서산간 지역은 추가 배송비 {formatKRW(shipping.remoteAreaFee)}</span>
+              </li>
+            )}
+          </ul>
+        )}
         <label className={styles.request}>
           <span>요청사항</span>
           <textarea
@@ -120,7 +131,7 @@ export function PreOrderContent({ order }: { order: DemoPreOrder }) {
         </div>
         <div className={styles.line}>
           <span>배송비</span>
-          <span>+ {formatKRW(totals.shipping)}</span>
+          <span>{totals.shipping === 0 ? "무료" : `+ ${formatKRW(totals.shipping)}`}</span>
         </div>
         <div className={`${styles.line} ${styles.totalLine}`}>
           <span>최종 결제 금액</span>
@@ -129,79 +140,126 @@ export function PreOrderContent({ order }: { order: DemoPreOrder }) {
       </section>
 
       {unpaid && (
-        <>
-          <section className={styles.card}>
-            <h3 className={styles.cardTitle}>결제수단</h3>
-            <button type="button" className={styles.method} aria-pressed="true">
-              <span aria-hidden="true">🏦</span> 무통장입금
+        <section className={styles.pay}>
+          <div className={styles.payBox}>
+            <h3>결제하기</h3>
+            <p>{order.depositRequested ? "입금 확인을 요청했어요" : "결제수단을 선택하세요"}</p>
+            <button type="button" className={styles.payMethod} onClick={() => setDepositOpen(true)}>
+              무통장입금
             </button>
-            {order.paymentDeadline && (
-              <p className={styles.deadline}>
-                <span aria-hidden="true">⏰</span> 결제 기한 <strong>{order.paymentDeadline}</strong>까지
-              </p>
-            )}
-          </section>
-
-          <section className={styles.card}>
-            <h3 className={styles.cardTitle}>입금 안내</h3>
-            <div className={styles.account}>
-              <div>
-                <p className={styles.accountNumber}>
-                  {DEMO_BANK_ACCOUNT.bank} {DEMO_BANK_ACCOUNT.number}
-                </p>
-                <span className={styles.meta}>예금주 {DEMO_BANK_ACCOUNT.holder}</span>
-              </div>
-              <button type="button" className={styles.copyButton} onClick={copyAccount}>
-                {copied === "done" ? "복사 완료" : copied === "failed" ? "복사 실패" : "계좌 복사"}
-              </button>
-            </div>
-            <div className={styles.line}>
-              <span>입금하실 금액</span>
-              <strong>{formatKRW(totals.total)}</strong>
-            </div>
-            <p className={styles.depositNote}>
-              <span aria-hidden="true">⚠️</span> 입금자명은 닉네임이 아닌 주문자 실명(
-              <strong>{DEMO_ADDRESS.ordererName}</strong>)으로 입금해주세요.
-            </p>
-            <button
-              type="button"
-              className={styles.primaryButton}
-              disabled={order.depositRequested}
-              onClick={() => demoOrders.update(order.id, { depositRequested: true })}
-            >
-              {order.depositRequested ? "입금 확인 요청됨" : "입금완료 확인요청"}
-            </button>
-            {order.depositRequested && (
-              <p className={styles.requested}>셀러가 입금을 확인하면 결제완료로 바뀌어요.</p>
-            )}
-          </section>
-        </>
+          </div>
+          <p className={styles.payDeadline}>
+            <span aria-hidden="true">⏰</span> 결제 마감 <strong>{deadline}</strong>
+            <span className={styles.payRule}>({paymentDeadlineRuleText(settings.paymentDeadline)})</span>
+          </p>
+        </section>
       )}
+      {order.status === "EXPIRED" && (
+        <p className={styles.payDeadline}>
+          <span aria-hidden="true">⏰</span> 결제 마감 <strong>{deadline}</strong>이 지나 결제할 수 없어요
+        </p>
+      )}
+
+      <section className={styles.card}>
+        <div className={styles.infoHead}>
+          <h3 className={styles.cardTitle}>주문서 정보</h3>
+          {unpaid && (
+            <button type="button" className={styles.editButton} onClick={() => setEditingAddress(true)}>
+              수정하기
+            </button>
+          )}
+        </div>
+        <dl className={styles.info}>
+          <div>
+            <dt>주문서 번호</dt>
+            <dd>{order.id}</dd>
+          </div>
+          <div>
+            <dt>닉네임</dt>
+            <dd>{nickname}</dd>
+          </div>
+          <AddressRows />
+        </dl>
+      </section>
+
+      {/* Portaled so the room sheet's slide-in transform cannot capture these fixed layers. */}
+      {depositOpen &&
+        createPortal(
+          <DepositSheet
+            total={totals.total}
+            account={settings.bankAccount}
+            nickname={nickname}
+            requested={Boolean(order.depositRequested)}
+            onRequest={() => demoOrders.update(order.id, { depositRequested: true })}
+            onClose={() => setDepositOpen(false)}
+          />,
+          document.body,
+        )}
+      {addressPopup &&
+        createPortal(
+          <AddressConfirmModal
+            onConfirm={() => {
+              demoOrders.update(order.id, { addressConfirmed: true });
+              setEditingAddress(false);
+            }}
+          />,
+          document.body,
+        )}
     </div>
   );
 }
 
 /** Fake orderer and delivery address (DEMO_ADDRESS). */
-export function AddressBlock() {
+function AddressRows() {
   return (
-    <div className={styles.address}>
-      <div className={styles.addressRow}>
-        <span className={styles.addressTag}>주문자</span>
-        <p>
+    <>
+      <div>
+        <dt>주문자</dt>
+        <dd>
           {DEMO_ADDRESS.ordererName} · {DEMO_ADDRESS.ordererPhone}
-        </p>
+        </dd>
       </div>
-      <div className={styles.addressRow}>
-        <span className={styles.addressTag}>받는 분</span>
-        <p>
+      <div>
+        <dt>받는 분</dt>
+        <dd>
           {DEMO_ADDRESS.name} · {DEMO_ADDRESS.phone}
-        </p>
+        </dd>
       </div>
-      <div className={styles.addressRow}>
-        <span className={styles.addressTag}>배송지</span>
-        <p>
+      <div>
+        <dt>배송지</dt>
+        <dd>
           ({DEMO_ADDRESS.postalCode}) {DEMO_ADDRESS.address} {DEMO_ADDRESS.detailAddress}
-        </p>
+        </dd>
+      </div>
+    </>
+  );
+}
+
+/** 주문자정보/배송지 확인 popup: shown until confirmed, and again from 수정하기. */
+function AddressConfirmModal({ onConfirm }: { onConfirm: () => void }) {
+  const [blocked, setBlocked] = useState(false);
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modal} role="alertdialog" aria-modal="true" aria-label="주문자정보 / 배송지 확인">
+        <h3 className={styles.modalTitle}>주문자정보 / 배송지 확인</h3>
+        <p className={styles.modalText}>아래 정보로 주문할까요?</p>
+        <dl className={`${styles.info} ${styles.modalAddress}`}>
+          <AddressRows />
+        </dl>
+        {blocked && (
+          <p className={styles.modalNotice} role="status">
+            클론에서는 배송지를 변경할 수 없어요 (가짜 배송지 1개만 있어요)
+          </p>
+        )}
+        <div className={styles.modalActions}>
+          <button type="button" className={styles.modalSecondary} onClick={() => setBlocked(true)}>
+            배송지 변경
+          </button>
+          <button type="button" className={styles.modalPrimary} onClick={onConfirm} autoFocus>
+            여기로 주문
+          </button>
+        </div>
       </div>
     </div>
   );

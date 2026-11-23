@@ -8,9 +8,8 @@ import {
   PRE_ORDER_STATUS,
   formatKRW,
   formatOrderedAgo,
-  type DemoPreOrder,
 } from "../data/demo-account";
-import { useDemoOrders } from "../data/demo-orders";
+import { useDemoOrders, type ResolvedPreOrder } from "../data/demo-orders";
 import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK } from "../data/nandapick";
 import { ROUTES } from "../data/routes";
@@ -78,8 +77,8 @@ export function OrderListPage() {
   );
 }
 
-/** One pre-order. Like the source, the card links to /pre-order/{id}. */
-function PreOrderCard({ order }: { order: DemoPreOrder }) {
+/** One pre-order; the card links to /pre-order/{id}. 기한 만료 follows the store's payment deadline. */
+function PreOrderCard({ order }: { order: ResolvedPreOrder }) {
   const status = PRE_ORDER_STATUS[order.status];
   return (
     <Link href={ROUTES.preOrder(order.id)} className={orders.card} aria-label={`주문서 ${order.id}`}>
