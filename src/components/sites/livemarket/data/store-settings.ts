@@ -44,7 +44,10 @@ export type StoreSettings = {
   bankAccount: { bank: string; number: string; holder: string };
   /** 1회 주문 최대 수량 */
   maxQuantityPerOrder: number;
-  /** 주문서 합치기: add further orders to the same unpaid order sheet until payment is confirmed. */
+  /**
+   * 주문서 합치기: add further orders to the same unpaid order sheet. Only until the buyer requests
+   * a deposit check; after that, new items always go to a new order sheet.
+   */
   mergeOrders: boolean;
   /** 스토어 공지 */
   notice: string;

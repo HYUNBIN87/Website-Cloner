@@ -146,8 +146,10 @@ function newOrder(now: Date, settings: StoreSettings): DemoPreOrder {
 export const demoOrders = {
   /**
    * Mirrors the source's pre-order upsert. With the store's 주문서 합치기 setting on, the item
-   * joins the room order that is still unpaid and not expired (keeping that order's deadline);
-   * otherwise every add starts a new order sheet. Returns the order id.
+   * joins the room order that is unpaid, not expired and has no deposit check requested yet
+   * (keeping that order's deadline); otherwise the add starts a new order sheet. An order whose
+   * buyer already asked for a deposit check is never changed: the buyer may have paid, and the
+   * seller must be able to match the deposit against the order amount. Returns the order id.
    */
   addItem(product: Product, option: string, requested: number, settings: StoreSettings): string {
     const now = new Date();
@@ -155,7 +157,11 @@ export const demoOrders = {
     const stored = parse(readRaw());
     const open = settings.mergeOrders
       ? stored.find(
-          (order) => isRoomOrder(order) && order.status === "UNPAID" && !isExpired(order, now.getTime()),
+          (order) =>
+            isRoomOrder(order) &&
+            order.status === "UNPAID" &&
+            !order.depositRequested &&
+            !isExpired(order, now.getTime()),
         )
       : undefined;
     const order = open ?? newOrder(now, settings);
@@ -168,8 +174,7 @@ export const demoOrders = {
             : entry,
         )
       : [...order.items, { name: product.name, image: product.image, option, quantity, amount: unitPrice * quantity }];
-    // The amount changed, so an earlier deposit-check request no longer matches it.
-    const next = { ...order, items, depositRequested: false };
+    const next = { ...order, items };
     write(open ? stored.map((entry) => (entry === open ? next : entry)) : [next, ...stored]);
     return next.id;
   },

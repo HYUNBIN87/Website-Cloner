@@ -71,6 +71,9 @@ out = os.path.join(ROOT, "src", "components", "sites", "livemarket", "data")
 os.makedirs(out, exist_ok=True)
 with open(os.path.join(out, "nandapick-products.json"), "w", encoding="utf-8") as f:
     # The live video ID and title are intentionally not stored; see data/live-video.ts.
-    json.dump({"capturedAt": "2026-11-20", "notice": data["notice"],
+    # The captured store notice is not stored either (it names the seller's real bank): the
+    # notice shown by the clone is the fake one in data/store-settings.ts.
+    json.dump({"capturedAt": "2026-11-20",
+               "notice": "가짜 공지입니다. 화면에 표시되는 스토어 공지는 store-settings.ts 에서 관리합니다.",
                "products": products}, f, ensure_ascii=False, indent=2)
 print("products", len(products))
