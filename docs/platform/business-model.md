@@ -4,7 +4,7 @@
 
 - 작성일: 2026-11-23 (같은 날 공급 상품의 발송 주체와 판매 확정 기준을 반영해 개정)
 - 상태: 초안. 7장의 질문이 정해지면 이 문서를 먼저 고칩니다.
-- 관련 문서: [스토어 설정](../research/livemarket/store-settings.md) (셀러가 바꾸는 값 목록), [셀러 어드민 초안](seller-admin.md) (5장의 셀러 어드민 화면을 가짜 데이터로 만든 것)
+- 관련 문서: [스토어 설정](../research/livemarket/store-settings.md) (셀러가 바꾸는 값 목록), [셀러 어드민 초안](seller-admin.md), [운영자 어드민 초안](operator-admin.md) (5장의 화면을 가짜 데이터로 만든 것)
 
 ## 1. 돈과 물건의 흐름
 

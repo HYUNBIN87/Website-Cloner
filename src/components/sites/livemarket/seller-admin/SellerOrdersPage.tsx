@@ -9,8 +9,8 @@ import {
   SELLER_ORDER_STATUS,
   isValidTrackingNumber,
   sellerAdmin,
-  supplyProductOf,
   useSellerOrders,
+  useSupplyNames,
   type SellerOrder,
   type SellerOrderStatus,
 } from "../data/seller-admin";
@@ -108,6 +108,7 @@ function StatusChip({ status }: { status: SellerOrderStatus }) {
 }
 
 function OrderCard({ order: entry, onOpen }: { order: SellerOrder; onOpen: () => void }) {
+  const supplyNames = useSupplyNames();
   return (
     <button type="button" className={`${orders.card} ${styles.orderCard}`} onClick={onOpen}>
       <div className={orders.statusRow}>
@@ -139,7 +140,7 @@ function OrderCard({ order: entry, onOpen }: { order: SellerOrder; onOpen: () =>
             {entry.items.map((item) => (
               <span key={`${item.name}-${item.option}`} className={styles.itemLine}>
                 {item.name} · {item.option} × {item.quantity}
-                {supplyProductOf(item) && <span className={styles.supplyBadge}>공급</span>}
+                {supplyNames.has(item.name) && <span className={styles.supplyBadge}>공급</span>}
               </span>
             ))}
           </dd>
@@ -154,7 +155,9 @@ function OrderCard({ order: entry, onOpen }: { order: SellerOrder; onOpen: () =>
   );
 }
 
-function OrderSheet({ order: entry, onClose }: { order: SellerOrder; onClose: () => void }) {
+/** Order detail sheet: where a deposit is confirmed and a tracking number is entered. */
+export function OrderSheet({ order: entry, onClose }: { order: SellerOrder; onClose: () => void }) {
+  const supplyNames = useSupplyNames();
   const waitingDeposit = entry.status === "UNPAID" || entry.status === "DEPOSIT_REQUESTED";
 
   return (
@@ -208,7 +211,7 @@ function OrderSheet({ order: entry, onClose }: { order: SellerOrder; onClose: ()
                 <div className={order.itemInfo}>
                   <p className={order.itemName}>
                     {item.name}
-                    {supplyProductOf(item) && <span className={styles.supplyBadge}>공급</span>}
+                    {supplyNames.has(item.name) && <span className={styles.supplyBadge}>공급</span>}
                   </p>
                   <span className={order.meta}>
                     {item.option} · 수량 {item.quantity}개
@@ -314,8 +317,9 @@ function ShipForm({ order: entry }: { order: SellerOrder }) {
   const [tracking, setTracking] = useState("");
   const [touched, setTouched] = useState(false);
   const valid = isValidTrackingNumber(tracking.trim());
+  const supplyNames = useSupplyNames();
   const supplyUnits = entry.items
-    .filter((item) => supplyProductOf(item))
+    .filter((item) => supplyNames.has(item.name))
     .reduce((sum, item) => sum + item.quantity, 0);
 
   return (

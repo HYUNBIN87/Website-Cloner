@@ -180,3 +180,7 @@ The payment deadline defaults to the next day at the same time, matching the sou
 ### Seller admin draft (`/seller-admin`)
 
 Not a clone: the source admin has not been inspected. The draft follows `docs/platform/business-model.md` and is described in `docs/platform/seller-admin.md`. It lists the demo buyer's orders together with fake customer orders, confirms deposits, records shipments, shows supply stock and monthly figures, and edits the store settings. Everything is fake and stored in this browser's localStorage.
+
+### Operator admin draft (`/operator-admin`)
+
+Also not a clone. It follows `docs/platform/business-model.md` and is described in `docs/platform/operator-admin.md`: supply products, handovers to sellers, recoveries, monthly invoices with a collected check, fee plans and seller approval. It shares one localStorage store with the seller admin (`data/platform.ts`), so received, recovered and billed figures agree between the two. The seller admin also has a deposit auto-matching screen (`/seller-admin/matching`) over fake bank deposits.

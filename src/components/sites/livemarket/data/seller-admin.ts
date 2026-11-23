@@ -4,61 +4,34 @@ import { useMemo, useSyncExternalStore } from "react";
 import { sessionStart, useNow } from "./clock";
 import {
   DEMO_ADDRESS,
+  DEMO_PRE_ORDERS,
   DEMO_USER,
   orderTotals,
   type DemoPreOrder,
   type DemoPreOrderItem,
 } from "./demo-account";
 import { demoOrders, resolvePreOrder, useDemoOrders, type ResolvedPreOrder } from "./demo-orders";
+import { createLocalStore, parseJson } from "./local-store";
 import { NANDAPICK } from "./nandapick";
+import {
+  DEMO_SELLER_ID,
+  invoiceFor,
+  monthOf,
+  sellerHoldings,
+  usePlatform,
+  type Invoice,
+  type PlatformState,
+  type ShippedUnits,
+} from "./platform";
 
 /*
  * Seller admin draft data. Everything here is FAKE and local:
- *  - the customers, names, phone numbers, addresses, depositor names and tracking numbers are invented;
- *  - the supply products, supply prices and the monthly plan are invented;
+ *  - the customers, names, phone numbers, addresses, bank deposits and tracking numbers are invented;
  *  - what the seller does (confirm a deposit, ship) is saved only in this browser's localStorage.
- * There is no server, bank, payment or courier integration.
+ * Supply products, handed and recovered quantities and the fee plan come from the platform store
+ * shared with the operator admin (data/platform.ts). There is no server, bank, payment or
+ * courier integration.
  */
-
-// ---------------------------------------------------------------------------
-// Supply (운영자 공급 상품) and plan fixtures
-// ---------------------------------------------------------------------------
-
-/** A product supplied by the operator and held by this seller. See docs/platform/business-model.md. */
-export type SupplyProduct = {
-  /** Matches order items by product name (the demo order items carry no product id). */
-  name: string;
-  image: string;
-  /** 공급가: what the seller owes the operator per shipped unit. Never shown to buyers. */
-  supplyPrice: number;
-  /** 최저 판매가 */
-  minPrice: number;
-  /** 넘긴 수량: units the operator handed to this seller. */
-  received: number;
-  /** 회수 수량: unsold units the operator took back. */
-  recovered: number;
-};
-
-const supply = (index: number, supplyPrice: number, minPrice: number, received: number, recovered = 0): SupplyProduct => ({
-  name: NANDAPICK.products[index].name,
-  image: NANDAPICK.products[index].image,
-  supplyPrice,
-  minPrice,
-  received,
-  recovered,
-});
-
-export const SUPPLY_PRODUCTS: readonly SupplyProduct[] = [
-  supply(0, 5000, 7000, 40),
-  supply(1, 5000, 7000, 30, 5),
-  supply(2, 12000, 16000, 20),
-];
-
-const SUPPLY_BY_NAME = new Map(SUPPLY_PRODUCTS.map((product) => [product.name, product]));
-export const supplyProductOf = (item: { name: string }) => SUPPLY_BY_NAME.get(item.name);
-
-/** Fake 이용료 플랜 assigned to the demo seller. */
-export const SELLER_PLAN = { name: "베이직", monthlyFee: 50000 } as const;
 
 /** Fake couriers for the 발송 처리 form. */
 export const CARRIERS = ["예시택배", "데모택배"] as const;
@@ -76,9 +49,11 @@ type Shipment = { carrier: string; trackingNumber: string };
 
 type CustomerOrderFixture = DemoPreOrder & {
   customer: OrderCustomer;
-  /** Name on the deposit, as the seller would read it from the bank statement. `null`: no deposit seen. */
+  /**
+   * Depositor name the seller already knows for this order (the buyer's deposit-check request, or
+   * an earlier confirmation). `null`: unknown, unless a bank deposit is matched to the order.
+   */
   depositorName: string | null;
-  paidMinutesAgo?: number;
   shipped?: Shipment & { minutesAgo: number };
 };
 
@@ -114,6 +89,17 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
     addressConfirmed: true,
   },
   {
+    id: "P202611230000000108",
+    label: LIVE,
+    status: "UNPAID",
+    minutesAgo: 15,
+    paymentWindowMinutes: DAY,
+    items: [item(6, "블랙/M", 2)],
+    customer: customer("윤견본", "모카라떼", 8),
+    depositorName: null,
+    addressConfirmed: true,
+  },
+  {
     id: "P202611230000000102",
     label: LIVE,
     status: "UNPAID",
@@ -143,7 +129,6 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
     label: LIVE,
     status: "PAID",
     minutesAgo: 2 * 60,
-    paidMinutesAgo: 90,
     paymentWindowMinutes: DAY,
     items: [item(0, "화이트/M", 3), item(12, "블랙/L")],
     customer: customer("최샘플", "하늘별", 4),
@@ -155,7 +140,6 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
     label: LIVE,
     status: "PAID",
     minutesAgo: 3 * 60,
-    paidMinutesAgo: 150,
     paymentWindowMinutes: DAY,
     items: [item(7, "차콜/L")],
     customer: customer("오더미", "새벽러너", 5),
@@ -167,7 +151,6 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
     label: LIVE,
     status: "PAID",
     minutesAgo: DAY + 2 * 60,
-    paidMinutesAgo: DAY,
     paymentWindowMinutes: DAY,
     items: [item(0, "네이비/L", 4), item(1, "블랙/M", 2), item(2, "블랙/L")],
     customer: customer("정테스트", "모카빵", 6),
@@ -193,7 +176,14 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
 // ---------------------------------------------------------------------------
 
 /** Seller-side record for one order: deposit confirmation and shipment. */
-type Fulfillment = { paidAt?: string; carrier?: string; trackingNumber?: string; shippedAt?: string };
+type Fulfillment = {
+  paidAt?: string;
+  /** The bank deposit this confirmation was made from (bulk confirmation of matched deposits). */
+  depositId?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  shippedAt?: string;
+};
 
 const STORAGE_KEY = "livemarket-clone-seller-admin";
 const listeners = new Set<() => void>();
@@ -263,7 +253,7 @@ export type SellerOrder = {
   deadline: number;
   customer: OrderCustomer;
   depositorName: string | null;
-  /** A deposit was seen and its name is not exactly the orderer's name. */
+  /** A depositor name is known and it is not exactly the orderer's name. */
   nameMismatch: boolean;
   items: DemoPreOrderItem[];
   totals: { items: number; shipping: number; total: number };
@@ -329,8 +319,123 @@ function toSellerOrder(
   };
 }
 
-/** Every order of the store, newest first. `undefined` during server render and hydration. */
-export function useSellerOrders(): SellerOrder[] | undefined {
+// ---------------------------------------------------------------------------
+// Bank deposits (fake) and automatic matching
+// ---------------------------------------------------------------------------
+
+/** One incoming transfer on the seller's account, as a bank feed would report it. */
+export type BankDeposit = { id: string; depositorName: string; amount: number; at: number };
+
+const fixtureTotal = (orderId: string) => {
+  const found = [...CUSTOMER_ORDERS, ...DEMO_PRE_ORDERS].find((entry) => entry.id === orderId);
+  return found ? orderTotals(found).total : 0;
+};
+
+/** Amounts are derived from the fake orders so that each case below stays what it is meant to be. */
+const DEPOSIT_FIXTURES: readonly { id: string; name: string; minutesAgo: number; amount: () => number }[] = [
+  // Wrong amount: 2,000원 short of the order of 김데모.
+  { id: "D-0008", name: "김데모", minutesAgo: 5, amount: () => fixtureTotal("P202611230000000101") - 2000 },
+  // Exact: the built-in unpaid order of the demo buyer.
+  { id: "D-0007", name: DEMO_ADDRESS.ordererName, minutesAgo: 10, amount: () => fixtureTotal(DEMO_PRE_ORDERS[0].id) },
+  { id: "D-0006", name: "이예시", minutesAgo: 20, amount: () => fixtureTotal("P202611230000000102") },
+  // Right amount, but the name has the nickname attached, so it cannot be matched by name.
+  { id: "D-0005", name: "박가상민트라떼", minutesAgo: 35, amount: () => fixtureTotal("P202611230000000103") },
+  // Belongs to no order.
+  { id: "D-0004", name: "무명씨", minutesAgo: 50, amount: () => 15000 },
+  // Deposits of orders that are already confirmed.
+  { id: "D-0003", name: "최샘플", minutesAgo: 90, amount: () => fixtureTotal("P202611230000000104") },
+  { id: "D-0002", name: "오더미", minutesAgo: 150, amount: () => fixtureTotal("P202611230000000105") },
+  { id: "D-0001", name: "정테스트", minutesAgo: DAY, amount: () => fixtureTotal("P202611220000000106") },
+];
+
+function bankDeposits(): BankDeposit[] {
+  return DEPOSIT_FIXTURES.map((entry) => ({
+    id: entry.id,
+    depositorName: entry.name,
+    amount: entry.amount(),
+    at: sessionStart() - entry.minutesAgo * 60_000,
+  }));
+}
+
+/** 확인 완료 / 매칭됨 / 금액 불일치 / 미매칭 */
+export type MatchResult = "CONFIRMED" | "MATCHED" | "AMOUNT_MISMATCH" | "UNMATCHED";
+
+export type DepositMatch = {
+  deposit: BankDeposit;
+  result: MatchResult;
+  /** The order the deposit belongs to (every result except 미매칭). */
+  order?: SellerOrder;
+  /** 미매칭 only: orders still waiting for a deposit of exactly this amount, for a manual check. */
+  sameAmount: SellerOrder[];
+};
+
+export type DepositMatching = {
+  /** Newest deposit first. */
+  matches: DepositMatch[];
+  /** 미입금: orders waiting for a deposit that no deposit was matched to. Newest first. */
+  unpaid: SellerOrder[];
+};
+
+const awaitsDeposit = (order: SellerOrder) => order.status === "UNPAID" || order.status === "DEPOSIT_REQUESTED";
+
+/**
+ * Matches bank deposits to orders by depositor name + amount. A deposit and an order are used at
+ * most once; older deposits and older orders go first.
+ *  1. deposits a confirmation was recorded from, and deposits equal to an already paid order → 확인 완료
+ *  2. same name and same amount as an order waiting for a deposit → 매칭됨
+ *  3. same name as a waiting order but another amount → 금액 불일치
+ *  4. anything else → 미매칭 (waiting orders of the same amount are listed as hints)
+ */
+export function matchDeposits(
+  deposits: readonly BankDeposit[],
+  orders: readonly SellerOrder[],
+  confirmedFrom: Readonly<Record<string, string | undefined>>,
+): DepositMatching {
+  const pendingDeposits = [...deposits].sort((a, b) => a.at - b.at);
+  const oldestFirst = [...orders].sort((a, b) => a.orderedAt - b.orderedAt);
+  const paid = oldestFirst.filter((order) => order.status === "PAID" || order.status === "SHIPPED");
+  const waiting = oldestFirst.filter(awaitsDeposit);
+  const usedOrders = new Set<string>();
+  const resolved = new Map<string, DepositMatch>();
+
+  const pass = (
+    pool: readonly SellerOrder[],
+    result: MatchResult,
+    fits: (deposit: BankDeposit, order: SellerOrder) => boolean,
+  ) => {
+    for (const deposit of pendingDeposits) {
+      if (resolved.has(deposit.id)) continue;
+      const order = pool.find((entry) => !usedOrders.has(entry.id) && fits(deposit, entry));
+      if (!order) continue;
+      usedOrders.add(order.id);
+      resolved.set(deposit.id, { deposit, result, order, sameAmount: [] });
+    }
+  };
+  const sameName = (deposit: BankDeposit, order: SellerOrder) => deposit.depositorName === order.customer.name;
+  const exact = (deposit: BankDeposit, order: SellerOrder) =>
+    sameName(deposit, order) && deposit.amount === order.totals.total;
+
+  pass(paid, "CONFIRMED", (deposit, order) => confirmedFrom[order.id] === deposit.id);
+  pass(paid, "CONFIRMED", exact);
+  pass(waiting, "MATCHED", exact);
+  pass(waiting, "AMOUNT_MISMATCH", sameName);
+
+  const unpaid = waiting.filter((order) => !usedOrders.has(order.id));
+  const matches = pendingDeposits
+    .map(
+      (deposit): DepositMatch =>
+        resolved.get(deposit.id) ?? {
+          deposit,
+          result: "UNMATCHED",
+          sameAmount: unpaid.filter((order) => order.totals.total === deposit.amount),
+        },
+    )
+    .reverse();
+  return { matches, unpaid: [...unpaid].reverse() };
+}
+
+/** Orders (newest first) and the deposit matching. `undefined` during server render and hydration. */
+export function useSellerData(): { orders: SellerOrder[]; matching: DepositMatching } | undefined {
   const raw = useSyncExternalStore<string | null | undefined>(subscribe, readRaw, () => undefined);
   const now = useNow();
   const buyerOrders = useDemoOrders();
@@ -347,7 +452,7 @@ export function useSellerOrders(): SellerOrder[] | undefined {
         fixture.shipped,
       ),
     );
-    // The demo buyer's deposit name is only known once they say they paid (or the order is paid).
+    // The demo buyer's deposit name is known once they say they paid (or the order is paid).
     const fromBuyer = buyerOrders.map((order) =>
       toSellerOrder(
         order,
@@ -357,16 +462,41 @@ export function useSellerOrders(): SellerOrder[] | undefined {
         saved[order.id],
       ),
     );
-    return [...fromBuyer, ...fromCustomers].sort((a, b) => b.orderedAt - a.orderedAt);
+    const known = [...fromBuyer, ...fromCustomers].sort((a, b) => b.orderedAt - a.orderedAt);
+    const confirmedFrom = Object.fromEntries(Object.entries(saved).map(([id, entry]) => [id, entry.depositId]));
+    const deposits = bankDeposits();
+    // An order with no known depositor name takes the name of the bank deposit matched to it.
+    const nameByOrder = new Map(
+      matchDeposits(deposits, known, confirmedFrom).matches.flatMap((match) =>
+        match.order ? [[match.order.id, match.deposit.depositorName] as const] : [],
+      ),
+    );
+    const orders = known.map((order) =>
+      order.depositorName === null && nameByOrder.has(order.id)
+        ? { ...order, depositorName: nameByOrder.get(order.id) ?? null }
+        : order,
+    );
+    return { orders, matching: matchDeposits(deposits, orders, confirmedFrom) };
   }, [raw, now, buyerOrders]);
+}
+
+/** Every order of the store, newest first. `undefined` during server render and hydration. */
+export function useSellerOrders(): SellerOrder[] | undefined {
+  return useSellerData()?.orders;
 }
 
 export const sellerAdmin = {
   /** 입금 확인: the order becomes 결제완료. The buyer's own screens show it as paid too. */
   confirmDeposit(orderId: string) {
+    sellerAdmin.confirmDeposits([{ orderId }]);
+  },
+  /** 입금 확인 for several orders at once (the matched deposits of the 입금 자동매칭 screen). */
+  confirmDeposits(pairs: readonly { orderId: string; depositId?: string }[]) {
     const saved = parse(readRaw());
-    write({ ...saved, [orderId]: { ...saved[orderId], paidAt: new Date().toISOString() } });
-    demoOrders.markPaid(orderId);
+    const paidAt = new Date().toISOString();
+    for (const { orderId, depositId } of pairs) saved[orderId] = { ...saved[orderId], paidAt, depositId };
+    write(saved);
+    for (const { orderId } of pairs) demoOrders.markPaid(orderId);
   },
   /** 발송 처리: entering the tracking number ships the order; supplied items count as sold from here. */
   ship(orderId: string, carrier: string, trackingNumber: string) {
@@ -383,77 +513,121 @@ export const sellerAdmin = {
 };
 
 // ---------------------------------------------------------------------------
+// The bank the deposits would be read from (입금 자동매칭)
+// ---------------------------------------------------------------------------
+
+/** Fake bank names for the picker; the real list comes with the bank integration. */
+export const BANK_CHOICES = ["예시은행", "데모은행", "샘플은행"] as const;
+
+export type SellerBank = { bank: string; accountNumber: string };
+
+const bankStore = createLocalStore("livemarket-clone-seller-bank");
+
+/** The saved bank, if any. `undefined` during server render and hydration, `null` when none is saved. */
+export function useSellerBank(): SellerBank | null | undefined {
+  const raw = bankStore.useRaw();
+  return useMemo(() => {
+    if (raw === undefined) return undefined;
+    const value = parseJson(raw);
+    if (typeof value !== "object" || value === null) return null;
+    const { bank, accountNumber } = value as Record<string, unknown>;
+    return typeof bank === "string" && typeof accountNumber === "string" ? { bank, accountNumber } : null;
+  }, [raw]);
+}
+
+export const sellerBank = { save: (bank: SellerBank) => bankStore.write(bank) };
+
+// ---------------------------------------------------------------------------
 // Supply stock and monthly figures (docs/platform/business-model.md)
 // ---------------------------------------------------------------------------
 
-export type SupplyStockRow = SupplyProduct & {
-  /** 발송 수량: units in shipped orders. A sale is confirmed at shipment. */
+/** The demo store's shipped units per product name. A sale is confirmed at shipment. */
+export function demoSellerShipped(orders: readonly SellerOrder[], now: number): Map<string, ShippedUnits> {
+  const thisMonth = monthOf(now, "thisMonth").start;
+  const lastMonth = monthOf(now, "lastMonth").start;
+  const units = new Map<string, ShippedUnits>();
+  for (const order of orders) {
+    if (!order.shipment) continue;
+    const at = order.shipment.shippedAt;
+    for (const line of order.items) {
+      const row = units.get(line.name) ?? { thisMonth: 0, lastMonth: 0, total: 0 };
+      row.total += line.quantity;
+      if (at >= thisMonth) row.thisMonth += line.quantity;
+      else if (at >= lastMonth) row.lastMonth += line.quantity;
+      units.set(line.name, row);
+    }
+  }
+  return units;
+}
+
+/** Names of the supply products this seller was handed, for the "공급" mark on order items. */
+export function useSupplyNames(): ReadonlySet<string> {
+  const state = usePlatform();
+  return useMemo(
+    () =>
+      new Set(
+        (state?.products ?? [])
+          .filter((entry) =>
+            state?.handovers.some((move) => move.sellerId === DEMO_SELLER_ID && move.productId === entry.id),
+          )
+          .map((entry) => entry.name),
+      ),
+    [state],
+  );
+}
+
+export type SupplyStockRow = {
+  name: string;
+  image: string;
+  supplyPrice: number;
+  minPrice: number;
+  /** 받은 수량: units the operator handed over (operator admin, 공급 출고 기록). */
+  received: number;
+  /** 판 수량: units in shipped orders. */
   shipped: number;
-  /** 셀러 보유 재고 = 넘긴 수량 − 발송 수량 − 회수 수량 */
+  /** 회수 수량: units the operator took back (operator admin, 회수 처리). */
+  recovered: number;
+  /** 남은 수량 = 받은 수량 − 판 수량 − 회수 수량 */
   remaining: number;
   /** Units in paid orders that still have to ship. */
   awaitingShipment: number;
 };
 
-function unitsOf(orders: readonly SellerOrder[], name: string, status: SellerOrderStatus) {
-  return orders
-    .filter((order) => order.status === status)
-    .flatMap((order) => order.items)
-    .filter((entry) => entry.name === name)
-    .reduce((sum, entry) => sum + entry.quantity, 0);
-}
-
-export function supplyStock(orders: readonly SellerOrder[]): SupplyStockRow[] {
-  return SUPPLY_PRODUCTS.map((entry) => {
-    const shipped = unitsOf(orders, entry.name, "SHIPPED");
-    return {
-      ...entry,
-      shipped,
-      remaining: entry.received - shipped - entry.recovered,
-      awaitingShipment: unitsOf(orders, entry.name, "PAID"),
-    };
-  });
+export function supplyStock(orders: readonly SellerOrder[], state: PlatformState, now: number): SupplyStockRow[] {
+  return sellerHoldings(state, DEMO_SELLER_ID, demoSellerShipped(orders, now)).map((row) => ({
+    name: row.product.name,
+    image: row.product.image,
+    supplyPrice: row.product.supplyPrice,
+    minPrice: row.product.minPrice,
+    received: row.handed,
+    shipped: row.shipped.total,
+    recovered: row.recovered,
+    remaining: row.holding,
+    awaitingShipment: orders
+      .filter((order) => order.status === "PAID")
+      .flatMap((order) => order.items)
+      .filter((line) => line.name === row.product.name)
+      .reduce((total, line) => total + line.quantity, 0),
+  }));
 }
 
 export type MonthlySummary = {
-  /** "2026년 11월" */
-  month: string;
   shippedOrders: number;
   /** 상품 매출: item amounts of orders shipped this month. */
   itemSales: number;
   /** Shipping fees collected on those orders. */
   shippingFees: number;
-  supplyLines: { name: string; quantity: number; supplyPrice: number; amount: number }[];
-  /** 공급 대금 = Σ 발송 수량 × 공급가 */
-  supplyCost: number;
-  monthlyFee: number;
-  /** 청구 예정 금액 = 월 이용료 + 공급 대금 (no returns exist in the draft). */
-  billing: number;
+  /** 청구 예정 금액: the same invoice the operator admin shows for this seller. */
+  invoice: Invoice;
 };
 
-export function monthlySummary(orders: readonly SellerOrder[], now: number): MonthlySummary {
-  const today = new Date(now);
-  const shippedThisMonth = orders.filter((order) => {
-    if (!order.shipment) return false;
-    const date = new Date(order.shipment.shippedAt);
-    return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth();
-  });
-  const supplyLines = SUPPLY_PRODUCTS.map((entry) => {
-    const quantity = shippedThisMonth
-      .flatMap((order) => order.items)
-      .filter((line) => line.name === entry.name)
-      .reduce((sum, line) => sum + line.quantity, 0);
-    return { name: entry.name, quantity, supplyPrice: entry.supplyPrice, amount: quantity * entry.supplyPrice };
-  }).filter((line) => line.quantity > 0);
-  const supplyCost = supplyLines.reduce((sum, line) => sum + line.amount, 0);
+export function monthlySummary(orders: readonly SellerOrder[], state: PlatformState, now: number): MonthlySummary {
+  const start = monthOf(now, "thisMonth").start;
+  const shippedThisMonth = orders.filter((order) => order.shipment && order.shipment.shippedAt >= start);
   return {
-    month: `${today.getFullYear()}년 ${today.getMonth() + 1}월`,
     shippedOrders: shippedThisMonth.length,
-    itemSales: shippedThisMonth.reduce((sum, order) => sum + order.totals.items, 0),
-    shippingFees: shippedThisMonth.reduce((sum, order) => sum + order.totals.shipping, 0),
-    supplyLines,
-    supplyCost,
-    monthlyFee: SELLER_PLAN.monthlyFee,
-    billing: SELLER_PLAN.monthlyFee + supplyCost,
+    itemSales: shippedThisMonth.reduce((total, order) => total + order.totals.items, 0),
+    shippingFees: shippedThisMonth.reduce((total, order) => total + order.totals.shipping, 0),
+    invoice: invoiceFor(state, DEMO_SELLER_ID, "thisMonth", now, demoSellerShipped(orders, now)),
   };
 }

@@ -490,6 +490,84 @@
   white-space: nowrap;
 }
 
-.body :where(p, span, dt, dd, h3, legend) {
+/* Operator admin and deposit matching */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.holding {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.holdingName {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+  color: rgb(3, 34, 12);
+}
+
+.groupTitle {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+  color: rgb(54, 70, 58);
+}
+
+.depositRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+}
+
+.depositRow:not(:last-child) {
+  border-bottom: 1px solid rgb(240, 240, 240);
+}
+
+.depositHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.depositName {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 24px;
+  color: rgb(30, 30, 30);
+  overflow-wrap: anywhere;
+}
+
+.depositAmount {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 24px;
+  color: rgb(30, 30, 30);
+}
+
+.linkButton {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20.8px;
+  color: rgb(20, 48, 112);
+  text-align: left;
+  text-decoration: underline;
+}
+
+.diff {
+  font-weight: 700;
+  color: rgb(220, 38, 38);
+}
+
+.body :where(p, span, dt, dd, h2, h3, legend) {
   word-break: keep-all;
 }

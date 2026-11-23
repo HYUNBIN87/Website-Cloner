@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { NumberField, TextArea, TextField } from "../admin/fields";
 import { NANDAPICK } from "../data/nandapick";
 import {
   defaultStoreSettings,
@@ -226,74 +227,6 @@ function Card({ title, note, children }: { title: string; note?: string; childre
       {note && <p className={styles.hint}>{note}</p>}
       {children}
     </section>
-  );
-}
-
-function TextField({
-  label,
-  value,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: "text" | "url";
-}) {
-  return (
-    <label className={styles.field}>
-      <span>{label}</span>
-      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
-}
-
-function TextArea({
-  label,
-  value,
-  rows,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  rows: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className={styles.field}>
-      <span>{label}</span>
-      <textarea rows={rows} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
-}
-
-/** Whole numbers only; anything else counts as the minimum. */
-function NumberField({
-  label,
-  value,
-  min = 0,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min?: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <label className={styles.field}>
-      <span>{label}</span>
-      <input
-        type="number"
-        inputMode="numeric"
-        min={min}
-        step={1}
-        value={value}
-        onChange={(event) => {
-          const next = Math.floor(Number(event.target.value));
-          onChange(Number.isFinite(next) ? Math.max(min, next) : min);
-        }}
-      />
-    </label>
   );
 }
 

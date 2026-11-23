@@ -2,7 +2,8 @@
 
 import { useNow } from "../data/clock";
 import { formatKRW } from "../data/demo-account";
-import { SELLER_PLAN, monthlySummary, useSellerOrders } from "../data/seller-admin";
+import { usePlatform } from "../data/platform";
+import { monthlySummary, useSellerOrders } from "../data/seller-admin";
 import order from "../order/order.module.css";
 import styles from "./seller-admin.module.css";
 
@@ -13,8 +14,10 @@ import styles from "./seller-admin.module.css";
 export function SalesPage() {
   const orders = useSellerOrders();
   const now = useNow();
-  if (orders === undefined || now === undefined) return null;
-  const summary = monthlySummary(orders, now);
+  const state = usePlatform();
+  if (orders === undefined || now === undefined || state === undefined) return null;
+  const summary = monthlySummary(orders, state, now);
+  const { invoice } = summary;
 
   return (
     <>
@@ -24,7 +27,7 @@ export function SalesPage() {
 
       <section className={order.card}>
         <h3 className={order.cardTitle}>
-          {summary.month} 매출 <span>발송 완료 {summary.shippedOrders}건</span>
+          {invoice.monthLabel} 매출 <span>발송 완료 {summary.shippedOrders}건</span>
         </h3>
         <div className={order.line}>
           <span>상품 매출</span>
@@ -42,18 +45,18 @@ export function SalesPage() {
 
       <section className={order.card}>
         <h3 className={order.cardTitle}>이번 달 청구 예정 금액</h3>
-        <p className={order.meta}>운영자에게 낼 금액 = 월 이용료 + 공급 대금 (발송 수량 × 공급가)</p>
+        <p className={order.meta}>운영자에게 낼 금액 = 월 이용료 + 공급 대금 (발송 수량 × 공급가) − 취소·반품분</p>
         <div className={order.line}>
-          <span>월 이용료 ({SELLER_PLAN.name} 플랜)</span>
-          <span>{formatKRW(summary.monthlyFee)}</span>
+          <span>월 이용료 ({invoice.plan?.name ?? "플랜 없음"} 플랜)</span>
+          <span>{formatKRW(invoice.monthlyFee)}</span>
         </div>
-        {summary.supplyLines.length === 0 ? (
+        {invoice.lines.length === 0 ? (
           <div className={order.line}>
             <span>공급 대금</span>
             <span>{formatKRW(0)}</span>
           </div>
         ) : (
-          summary.supplyLines.map((line) => (
+          invoice.lines.map((line) => (
             <div key={line.name} className={order.line}>
               <span>
                 {line.name} {line.quantity}개 × {formatKRW(line.supplyPrice)}
@@ -62,10 +65,19 @@ export function SalesPage() {
             </div>
           ))
         )}
+        <div className={order.line}>
+          <span>취소·반품분</span>
+          <span>− {formatKRW(invoice.returns)}</span>
+        </div>
         <div className={`${order.line} ${order.totalLine}`}>
           <span>청구 예정 금액</span>
-          <strong>{formatKRW(summary.billing)}</strong>
+          <strong>{formatKRW(invoice.total)}</strong>
         </div>
+        {invoice.plan && (
+          <p className={order.meta}>
+            결제일: 다음 달 {invoice.plan.billingDay}일 · 운영자 어드민의 {invoice.monthLabel} 청구서와 같은 금액입니다.
+          </p>
+        )}
         <p className={styles.hint}>
           취소·반품분 차감은 아직 없습니다. 초안에는 발송 후 반품 기능이 없습니다.
         </p>

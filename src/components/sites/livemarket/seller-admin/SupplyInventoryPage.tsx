@@ -1,19 +1,24 @@
 "use client";
 
 import Image from "next/image";
+import { useNow } from "../data/clock";
 import { formatKRW } from "../data/demo-account";
+import { usePlatform } from "../data/platform";
 import { supplyStock, useSellerOrders } from "../data/seller-admin";
 import order from "../order/order.module.css";
 import styles from "./seller-admin.module.css";
 
 /**
  * /seller-admin/inventory: 내 공급 재고. Per supplied product: received, sold (shipped) and
- * remaining units. 남은 수량 = 받은 수량 − 판 수량 − 회수 수량, computed, never typed in.
+ * remaining units. 남은 수량 = 받은 수량 − 판 수량 − 회수 수량, computed, never typed in. 받은 수량 and
+ * 회수 수량 are what the operator admin recorded (공급 출고 기록, 회수 처리).
  */
 export function SupplyInventoryPage() {
   const orders = useSellerOrders();
-  if (orders === undefined) return null;
-  const rows = supplyStock(orders);
+  const state = usePlatform();
+  const now = useNow();
+  if (orders === undefined || state === undefined || now === undefined) return null;
+  const rows = supplyStock(orders, state, now);
 
   return (
     <>
@@ -21,6 +26,7 @@ export function SupplyInventoryPage() {
         운영자에게 받은 공급 상품입니다. 판 수량은 발송 처리(송장번호 입력)한 수량이고, 남은 수량은 받은 수량 − 판 수량 − 회수
         수량으로 자동 계산됩니다. 실제로 가진 수량과 맞는지 대조해 보세요.
       </p>
+      {rows.length === 0 && <p className={styles.intro}>아직 운영자에게 받은 공급 상품이 없습니다.</p>}
       {rows.map((row) => (
         <section key={row.name} className={order.card}>
           <div className={styles.stockHead}>
