@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { Icon } from "../Icon";
+import { DEFAULT_LIVE_BROADCAST, useLiveBroadcast } from "../data/broadcasts";
 import { LOGIN_URL, NANDAPICK, SECRET_ROOM_URL, type Product } from "../data/nandapick";
 import { useStoreProducts } from "../data/store-products";
 import { useStoreSettings } from "../data/store-settings";
@@ -20,6 +21,10 @@ const store = NANDAPICK;
 
 export function ProfileLive() {
   const settings = useStoreSettings(store.slug);
+  // The 진행 중 broadcast of the seller admin; the default one until the saved state is known.
+  const live = useLiveBroadcast();
+  const liveTitle =
+    live === undefined ? DEFAULT_LIVE_BROADCAST.title : live ? live.title : "지금은 진행 중인 방송이 없습니다";
   // Snapshot products plus the ones the seller listed in the seller admin.
   const storeProducts = useStoreProducts();
   const [query, setQuery] = useState("");
@@ -61,7 +66,7 @@ export function ProfileLive() {
         </header>
 
         <div className={styles.titleRow}>
-          <h3 className={styles.liveTitle}>{store.liveTitle}</h3>
+          <h3 className={styles.liveTitle}>{liveTitle}</h3>
         </div>
 
         <div className={styles.mediaRow}>
@@ -72,10 +77,12 @@ export function ProfileLive() {
               </div>
               <Link href={SECRET_ROOM_URL} className={styles.playerOverlay}>
                 <span className={styles.playerShade} />
-                <span className={styles.liveBadge}>
-                  <span className={styles.liveDot} />
-                  <span className={styles.liveText}>LIVE</span>
-                </span>
+                {live !== null && (
+                  <span className={styles.liveBadge}>
+                    <span className={styles.liveDot} />
+                    <span className={styles.liveText}>LIVE</span>
+                  </span>
+                )}
                 <span className={styles.secretRoom}>
                   <span className={styles.secretIcons} aria-hidden="true">
                     <span className={styles.secretIcon}>
@@ -91,7 +98,7 @@ export function ProfileLive() {
                       <Icon name="asterisk" width={23} />
                     </span>
                   </span>
-                  <span className={styles.secretLabel}>비밀 라이브방 입장</span>
+                  <span className={styles.secretLabel}>{live === null ? "방송 준비 중" : "비밀 라이브방 입장"}</span>
                 </span>
               </Link>
             </div>

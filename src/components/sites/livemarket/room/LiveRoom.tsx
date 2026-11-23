@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "../Icon";
-import { DEMO_TIME_DEAL, DEMO_USER } from "../data/demo-account";
+import { roomPass, useLiveBroadcast, useLiveVideoId, type Broadcast } from "../data/broadcasts";
+import { DEMO_USER } from "../data/demo-account";
 import { demoOrders, latestRoomOrder, useDemoOrders } from "../data/demo-orders";
 import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK, ROOM_LOGIN_URL, type Product } from "../data/nandapick";
@@ -17,18 +18,16 @@ import { SELLERS } from "../data/sellers";
 import { BottomSheet } from "../live/BottomSheet";
 import { LiveVideo } from "../live/LiveVideo";
 import { ReplaySheet, SellerSubtitle } from "../live/ReplaySheet";
-import { HAS_LIVE_VIDEO } from "../data/live-video";
 import sheet from "../live/sheet.module.css";
 import { OptionSheet } from "../order/OptionSheet";
 import { OrderPaySheet } from "../order/OrderPaySheet";
 import { RoomOnboarding, hasCompletedOnboarding } from "./RoomOnboarding";
 import { RoomProductSheet } from "./RoomProductSheet";
 import { StoreVisitModal } from "./StoreVisitModal";
+import overlays from "./overlays.module.css";
 import styles from "./room.module.css";
 
 const store = NANDAPICK;
-/** Fake identifier: the onboarding is remembered per time deal, like the source. */
-const TIME_DEAL_ID = DEMO_TIME_DEAL.id;
 const MAX_MESSAGES = 200;
 const DIGIT_HEIGHT = 18;
 
@@ -76,7 +75,8 @@ const RAIL_ITEMS = [
 
 type RailKey = (typeof RAIL_ITEMS)[number]["key"];
 
-export function LiveRoom() {
+/** The live room of one broadcast. Entry (no broadcast, secret room) is decided by `LiveRoom` below. */
+function Room({ broadcast }: { broadcast: Broadcast }) {
   const router = useRouter();
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -94,8 +94,11 @@ export function LiveRoom() {
   const orders = useDemoOrders();
   const settings = useStoreSettings(store.slug);
 
-  // Snapshot products plus the ones the seller listed in the seller admin.
-  const products = useStoreProducts();
+  const hasVideo = useLiveVideoId() !== "";
+  // The products chosen for this broadcast, out of the snapshot products plus the seller's listings.
+  const storeProducts = useStoreProducts();
+  const chosen = storeProducts.filter((product) => broadcast.productIds.includes(product.id));
+  const products = chosen.length > 0 ? chosen : storeProducts;
   const pinned = products.find((product) => product.pinned) ?? products[0];
   const followers = SELLERS.find((seller) => seller.slug === store.slug)?.followers ?? 0;
   const close = useCallback(() => setOverlay(null), []);
@@ -107,10 +110,10 @@ export function LiveRoom() {
     else router.push(ROOM_LOGIN_URL);
   };
 
-  /** The item joins the time-deal order, the purchase line appears in chat, then the pay sheet opens. */
+  /** The item joins this broadcast's order, the purchase line appears in chat, then the pay sheet opens. */
   const placeOrder = (product: Product, option: string, quantity: number) => {
     if (!session) return;
-    const orderId = demoOrders.addItem(product, option, quantity, settings);
+    const orderId = demoOrders.addItem(product, option, quantity, settings, broadcast);
     sequence.current += 1;
     const message = ownPurchaseMessage(
       `mine-${sequence.current}`,
@@ -126,9 +129,9 @@ export function LiveRoom() {
 
   // Onboarding is shown until completed for this time deal (stored in localStorage, like the source).
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setOnboardingOpen(!hasCompletedOnboarding(TIME_DEAL_ID)));
+    const frame = requestAnimationFrame(() => setOnboardingOpen(!hasCompletedOnboarding(broadcast.id)));
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [broadcast.id]);
 
   // Simulated realtime: the source pushes chat and purchase messages over a socket.
   useEffect(() => {
@@ -231,7 +234,7 @@ export function LiveRoom() {
         <div className={styles.video}>
           <LiveVideo params={{ autoplay: 1, mute: muted ? 1 : 0 }} reloadKey={playerKey} />
         </div>
-        {HAS_LIVE_VIDEO && muted && (
+        {hasVideo && muted && (
           <button type="button" className={styles.unmute} onClick={unmute} aria-label="소리 켜기">
             <span className={styles.unmuteCard}>
               <span className={styles.unmuteIcon} aria-hidden="true">
@@ -253,7 +256,7 @@ export function LiveRoom() {
               <Icon name="room-viewers" width={13} />
               <ViewerCount value={viewers} />
             </div>
-            <span className={styles.liveTitle}>{store.liveTitle}</span>
+            <span className={styles.liveTitle}>{broadcast.title}</span>
             <Link href={ROUTES.profileLive} className={styles.closeButton} aria-label="라이브 나가기">
               <Icon name="room-close" width={20} />
             </Link>
@@ -443,8 +446,127 @@ export function LiveRoom() {
         />
       )}
       {onboardingOpen && (
-        <RoomOnboarding timeDealId={TIME_DEAL_ID} settings={settings} onDone={() => setOnboardingOpen(false)} />
+        <RoomOnboarding timeDealId={broadcast.id} settings={settings} onDone={() => setOnboardingOpen(false)} />
       )}
+    </div>
+  );
+}
+
+/**
+ * /{store}/profile-live/room. Shows the broadcast that is 진행 중 in the seller admin's 방송 관리.
+ * A secret room asks for its password or lets only logged-in 단골 in; the check happens in the
+ * browser (fake data), so it is not real access control.
+ */
+export function LiveRoom() {
+  const live = useLiveBroadcast();
+  const session = useDemoSession();
+  const [unlockedId, setUnlockedId] = useState<string | null>(null);
+  const waiting = <div className={styles.screen} data-lm-theme="dark" />;
+
+  if (live === undefined) return waiting;
+  if (live === null) {
+    return (
+      <RoomNotice title="진행 중인 방송이 없습니다" text="방송이 시작되면 이곳에서 볼 수 있어요.">
+        <Link href={ROUTES.profileLive} className={overlays.storeGo}>
+          스토어로 돌아가기
+        </Link>
+      </RoomNotice>
+    );
+  }
+  if (live.secret.enabled && live.secret.condition === "FOLLOWERS") {
+    if (session === undefined) return waiting;
+    // The demo account is a 단골 of the demo store (see DEMO_FOLLOWING).
+    if (session === null) {
+      return (
+        <RoomNotice title="단골만 입장할 수 있는 비밀 라이브방입니다" text="로그인하고 단골을 맺으면 입장할 수 있어요.">
+          <Link href={ROUTES.profileLive} className={overlays.storeLater}>
+            돌아가기
+          </Link>
+          <Link href={ROOM_LOGIN_URL} className={overlays.storeGo}>
+            로그인
+          </Link>
+        </RoomNotice>
+      );
+    }
+  }
+  if (live.secret.enabled && live.secret.condition === "PASSWORD" && unlockedId !== live.id && !roomPass.has(live.id)) {
+    return (
+      <PasswordGate
+        password={live.secret.password}
+        onPass={() => {
+          roomPass.remember(live.id);
+          setUnlockedId(live.id);
+        }}
+      />
+    );
+  }
+  return <Room key={live.id} broadcast={live} />;
+}
+
+function RoomNotice({ title, text, children }: { title: string; text: string; children: ReactNode }) {
+  return (
+    <div className={styles.screen} data-lm-theme="dark">
+      <div className={overlays.modalOverlay}>
+        <div className={overlays.storeModal} role="alertdialog" aria-modal="true" aria-label={title}>
+          <div className={overlays.storeCopy}>
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </div>
+          <div className={overlays.storeActions}>{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PasswordGate({ password, onPass }: { password: string; onPass: () => void }) {
+  const [value, setValue] = useState("");
+  const [wrong, setWrong] = useState(false);
+
+  return (
+    <div className={styles.screen} data-lm-theme="dark">
+      <div className={overlays.modalOverlay}>
+        <form
+          className={overlays.storeModal}
+          aria-label="비밀 라이브방 입장"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (value.trim() === password) onPass();
+            else setWrong(true);
+          }}
+        >
+          <div className={overlays.storeCopy}>
+            <h3>비밀 라이브방입니다</h3>
+            <p>셀러에게 받은 비밀번호를 입력해주세요.</p>
+          </div>
+          <input
+            className={overlays.gateInput}
+            type="password"
+            value={value}
+            placeholder="비밀번호"
+            aria-label="비밀번호"
+            aria-invalid={wrong}
+            autoFocus
+            onChange={(event) => {
+              setValue(event.target.value);
+              setWrong(false);
+            }}
+          />
+          {wrong && (
+            <p className={overlays.gateError} role="alert">
+              비밀번호가 맞지 않습니다.
+            </p>
+          )}
+          <div className={overlays.storeActions}>
+            <Link href={ROUTES.profileLive} className={overlays.storeLater}>
+              돌아가기
+            </Link>
+            <button type="submit" className={overlays.storeGo}>
+              입장
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,7 @@
-import { HAS_LIVE_VIDEO, LIVE_VIDEO } from "../data/live-video";
+"use client";
+
+import { useLiveVideoId } from "../data/broadcasts";
+import { LIVE_VIDEO } from "../data/live-video";
 import styles from "./live-video.module.css";
 
 export function youtubeEmbed(videoId: string, params: Record<string, string | number>) {
@@ -11,8 +14,8 @@ export function youtubeEmbed(videoId: string, params: Record<string, string | nu
 }
 
 /**
- * The configured YouTube embed, or a "LIVE 영상 영역" placeholder when no video ID is set
- * (see data/live-video.ts). The iframe is styled by the parent container's `iframe` rule;
+ * The YouTube embed of the live broadcast (seller admin, 방송 관리), or a "LIVE 영상 영역"
+ * placeholder when it has no video ID and none is configured in data/live-video.ts. The iframe is styled by the parent container's `iframe` rule;
  * the placeholder fills the nearest positioned ancestor.
  */
 export function LiveVideo({
@@ -24,7 +27,8 @@ export function LiveVideo({
   caption?: string;
   reloadKey?: string | number;
 }) {
-  if (!HAS_LIVE_VIDEO) {
+  const videoId = useLiveVideoId();
+  if (!videoId) {
     return (
       <div className={styles.placeholder} role="img" aria-label="LIVE 영상 영역">
         <span className={styles.label}>LIVE 영상 영역</span>
@@ -33,7 +37,7 @@ export function LiveVideo({
     );
   }
 
-  const src = youtubeEmbed(LIVE_VIDEO.youtubeVideoId, params);
+  const src = youtubeEmbed(videoId, params);
   return (
     <iframe
       key={`${reloadKey ?? ""}|${src}`}

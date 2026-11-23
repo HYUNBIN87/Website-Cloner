@@ -5,7 +5,7 @@ import { useState } from "react";
 import { NANDAPICK, replayToSeconds, type Product } from "../data/nandapick";
 import { BottomSheet } from "./BottomSheet";
 import { LiveVideo } from "./LiveVideo";
-import { HAS_LIVE_VIDEO } from "../data/live-video";
+import { useLiveVideoId } from "../data/broadcasts";
 import sheet from "./sheet.module.css";
 
 const store = NANDAPICK;
@@ -36,6 +36,7 @@ export function ReplaySheet({
 }) {
   const [muted, setMuted] = useState(true);
   const [copied, setCopied] = useState(false);
+  const hasVideo = useLiveVideoId() !== "";
   const start = product.replay ? replayToSeconds(product.replay) : 0;
   const params = { autoplay: 1, mute: muted ? 1 : 0, start, end: start + 180 };
 
@@ -78,7 +79,7 @@ export function ReplaySheet({
     >
       <div className={sheet.clip}>
         <LiveVideo params={params} caption={product.replay ? `${product.replay}부터 다시보기` : undefined} />
-        {HAS_LIVE_VIDEO && muted && (
+        {hasVideo && muted && (
           <button type="button" className={sheet.muted} onClick={() => setMuted(false)}>
             <span className={sheet.mutedIcon} aria-hidden="true">
               🔇

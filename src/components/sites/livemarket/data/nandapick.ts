@@ -20,7 +20,6 @@ export const NANDAPICK = {
   slug: "nandapick",
   name: "데모샵",
   avatar: "/sites/livemarket/img/demo-store-avatar.png",
-  liveTitle: "1120♡굿모닝♡",
   business: {
     company: "데모상점(DEMO SHOP)",
     ceo: "홍길동",

@@ -1,3 +1,4 @@
+import { DEFAULT_LIVE_BROADCAST, PAST_BROADCASTS, orderBroadcastInfo } from "./broadcasts";
 import { NANDAPICK } from "./nandapick";
 import { SELLERS } from "./sellers";
 
@@ -55,7 +56,7 @@ export const BUILT_IN_SHIPPING: OrderShipping = { fee: 4000, freeFrom: 100000 };
 
 export type DemoPreOrder = {
   id: string;
-  /** "🔴 yy.MM.dd HH:mm 라이브" or "⏰ yy.MM.dd HH:mm 타임딜", as the source labels them. */
+  /** "🔴 yy.MM.dd HH:mm 라이브" or "⏰ yy.MM.dd HH:mm 타임딜", as the source labels them. Copied from the broadcast. */
   label: string;
   /** Stored status. 기한 만료 is not stored: an unpaid order past its stored deadline shows as expired. */
   status: Exclude<PreOrderStatus, "EXPIRED">;
@@ -71,7 +72,9 @@ export type DemoPreOrder = {
    * the order was placed. Later setting changes do not move it.
    */
   paymentDeadline?: string;
-  /** Absent for orders placed in a regular live. */
+  /** The broadcast the order was placed in (seller admin, 방송 관리). */
+  broadcastId?: string;
+  /** Start time and title of the time deal, copied from the broadcast. Absent for a regular live. */
   timeDeal?: { startedAt: string; title: string };
   /**
    * Shipping terms in force when the order was placed. Saved on the order so a later change of
@@ -85,14 +88,6 @@ export type DemoPreOrder = {
   /** The buyer pressed "입금완료 확인요청". */
   depositRequested?: boolean;
 };
-
-/** Fake time deal running in the demo live room. */
-export const DEMO_TIME_DEAL = {
-  id: "demo-time-deal",
-  title: NANDAPICK.liveTitle,
-  startedAt: "2026-11-20T08:00",
-  label: "⏰ 26.11.20 08:00 타임딜",
-} as const;
 
 /** Fake color/size options: the store snapshot has no option data. */
 export const DEMO_OPTIONS = {
@@ -135,7 +130,7 @@ const item = (index: number, option: string, quantity = 1, additionalPrice = 0):
 export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
   {
     id: "P202611200000000001",
-    label: "🔴 26.11.20 08:00 라이브",
+    ...orderBroadcastInfo(DEFAULT_LIVE_BROADCAST),
     status: "UNPAID",
     minutesAgo: 12,
     paymentWindowMinutes: 24 * 60,
@@ -144,25 +139,23 @@ export const DEMO_PRE_ORDERS: DemoPreOrder[] = [
   },
   {
     id: "P202611200000000002",
-    label: "⏰ 26.11.19 12:00 타임딜",
+    ...orderBroadcastInfo(PAST_BROADCASTS.noon1119),
     status: "CANCELED",
     minutesAgo: 3 * 60,
     paymentWindowMinutes: 24 * 60,
     items: [item(7, "차콜/L")],
-    timeDeal: { startedAt: "2026-11-19T12:00", title: "1119 점심 타임딜" },
   },
   {
     id: "P202611190000000003",
-    label: "⏰ 26.11.19 20:00 타임딜",
+    ...orderBroadcastInfo(PAST_BROADCASTS.evening1119),
     status: "PAID",
     minutesAgo: 14 * 60,
     paymentWindowMinutes: 24 * 60,
     items: [item(3, "그레이/XL", 1, 2000)],
-    timeDeal: { startedAt: "2026-11-19T20:00", title: "1119 저녁 타임딜" },
   },
   {
     id: "P202611180000000004",
-    label: "🔴 26.11.18 10:00 라이브",
+    ...orderBroadcastInfo(PAST_BROADCASTS.live1118),
     // Unpaid for two days with a one-day window: shown as 기한 만료.
     status: "UNPAID",
     minutesAgo: 2 * 24 * 60,

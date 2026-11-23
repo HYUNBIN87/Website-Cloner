@@ -184,3 +184,7 @@ Not a clone: the source admin has not been inspected. The draft follows `docs/pl
 ### Operator admin draft (`/operator-admin`)
 
 Also not a clone. It follows `docs/platform/business-model.md` and is described in `docs/platform/operator-admin.md`: supply products, handovers to sellers, recoveries, monthly invoices with a collected check, fee plans and seller approval. It shares one localStorage store with the seller admin (`data/platform.ts`), so received, recovered and billed figures agree between the two. The seller admin also has a deposit auto-matching screen (`/seller-admin/matching`) over fake bank deposits.
+
+### Broadcasts drive the live room
+
+The live room no longer shows a fixed live: it shows the broadcast that is 진행 중 in the seller admin (`/seller-admin/broadcasts`, `data/broadcasts.ts`). Its title, YouTube video ID, chosen products and secret-room entry condition come from there, and new orders copy its kind, start time and title for the order label and the "… 시작 타임딜" line. By default one broadcast (the previous fixed title, all snapshot products, no entry condition) is live, so the cloned screens look as before. The "비밀 라이브방 입장" label on the store page is kept as on the source regardless of the setting.

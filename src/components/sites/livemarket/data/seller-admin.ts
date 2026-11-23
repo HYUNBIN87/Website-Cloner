@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
+import { DEFAULT_LIVE_BROADCAST, orderBroadcastInfo } from "./broadcasts";
 import { sessionStart, useNow } from "./clock";
 import {
   DEMO_ADDRESS,
@@ -73,13 +74,14 @@ const customer = (name: string, nickname: string, n: number): OrderCustomer => (
   address: `(00000) 서울특별시 중구 예시로 ${n}길 ${n * 10} 데모빌라 ${n}0${n}호`,
 });
 
-const LIVE = "🔴 26.11.20 08:00 라이브";
+/** The other customers ordered in the broadcast that is live by default. */
+const CURRENT = orderBroadcastInfo(DEFAULT_LIVE_BROADCAST);
 const DAY = 24 * 60;
 
 const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   {
     id: "P202611230000000101",
-    label: LIVE,
+    ...CURRENT,
     status: "UNPAID",
     minutesAgo: 8,
     paymentWindowMinutes: DAY,
@@ -90,7 +92,7 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   },
   {
     id: "P202611230000000108",
-    label: LIVE,
+    ...CURRENT,
     status: "UNPAID",
     minutesAgo: 15,
     paymentWindowMinutes: DAY,
@@ -101,7 +103,7 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   },
   {
     id: "P202611230000000102",
-    label: LIVE,
+    ...CURRENT,
     status: "UNPAID",
     depositRequested: true,
     minutesAgo: 25,
@@ -113,7 +115,7 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   },
   {
     id: "P202611230000000103",
-    label: LIVE,
+    ...CURRENT,
     status: "UNPAID",
     depositRequested: true,
     minutesAgo: 40,
@@ -126,7 +128,7 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   },
   {
     id: "P202611230000000104",
-    label: LIVE,
+    ...CURRENT,
     status: "PAID",
     minutesAgo: 2 * 60,
     paymentWindowMinutes: DAY,
@@ -137,7 +139,7 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   },
   {
     id: "P202611230000000105",
-    label: LIVE,
+    ...CURRENT,
     status: "PAID",
     minutesAgo: 3 * 60,
     paymentWindowMinutes: DAY,
@@ -148,7 +150,7 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   },
   {
     id: "P202611220000000106",
-    label: LIVE,
+    ...CURRENT,
     status: "PAID",
     minutesAgo: DAY + 2 * 60,
     paymentWindowMinutes: DAY,
@@ -160,7 +162,7 @@ const CUSTOMER_ORDERS: readonly CustomerOrderFixture[] = [
   },
   {
     id: "P202611230000000107",
-    label: LIVE,
+    ...CURRENT,
     status: "CANCELED",
     minutesAgo: 5 * 60,
     paymentWindowMinutes: DAY,
@@ -246,6 +248,8 @@ export const SELLER_ORDER_STATUS: Record<SellerOrderStatus, { text: string; colo
 export type SellerOrder = {
   id: string;
   label: string;
+  /** The broadcast the order was placed in. */
+  broadcastId?: string;
   status: SellerOrderStatus;
   /** Epoch ms. */
   orderedAt: number;
@@ -298,6 +302,7 @@ function toSellerOrder(
   return {
     id: order.id,
     label: order.label,
+    broadcastId: order.broadcastId,
     status,
     orderedAt: now - order.minutesAgo * 60_000,
     minutesAgo: order.minutesAgo,

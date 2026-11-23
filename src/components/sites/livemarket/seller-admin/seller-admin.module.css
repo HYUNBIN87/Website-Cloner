@@ -571,3 +571,17 @@
 .body :where(p, span, dt, dd, h2, h3, legend) {
   word-break: keep-all;
 }
+
+/* Broadcast management */
+.stats > .statWide {
+  grid-column: span 2;
+}
+
+.productPicker {
+  display: flex;
+  max-height: 220px;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 4px;
+}

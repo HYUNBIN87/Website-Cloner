@@ -4,11 +4,11 @@ import { useMemo, useSyncExternalStore } from "react";
 import { sessionStart, useNow } from "./clock";
 import {
   DEMO_PRE_ORDERS,
-  DEMO_TIME_DEAL,
   productPrice,
   type DemoPreOrder,
   type PreOrderStatus,
 } from "./demo-account";
+import { orderBroadcastInfo, type Broadcast } from "./broadcasts";
 import type { Product } from "./nandapick";
 import { maxOrderQuantity, paymentDeadline, type StoreSettings } from "./store-settings";
 
@@ -128,31 +128,37 @@ export function latestRoomOrder(orders: readonly ResolvedPreOrder[] | undefined)
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
-function newOrder(now: Date, settings: StoreSettings): DemoPreOrder {
+function newOrder(now: Date, settings: StoreSettings, broadcast: Broadcast): DemoPreOrder {
   const day = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
   return {
     // Same shape as the source's order numbers; the digits are just this browser's clock.
     id: `P${day}${String(now.getTime()).slice(-10)}`,
-    label: DEMO_TIME_DEAL.label,
+    // Label, time-deal start and title are copied from the broadcast the order is placed in.
+    ...orderBroadcastInfo(broadcast),
     status: "UNPAID",
     orderedAt: now.toISOString(),
     // Saved once, from the setting in force at order time.
     paymentDeadline: paymentDeadline(now, settings.paymentDeadline).toISOString(),
     shipping: { fee: settings.shipping.fee, freeFrom: settings.shipping.freeFrom },
     items: [],
-    timeDeal: { startedAt: DEMO_TIME_DEAL.startedAt, title: DEMO_TIME_DEAL.title },
   };
 }
 
 export const demoOrders = {
   /**
    * Mirrors the source's pre-order upsert. With the store's 주문서 합치기 setting on, the item
-   * joins the room order that is unpaid, not expired and has no deposit check requested yet
+   * joins the order of the same broadcast that is unpaid, not expired and has no deposit check requested yet
    * (keeping that order's deadline); otherwise the add starts a new order sheet. An order whose
    * buyer already asked for a deposit check is never changed: the buyer may have paid, and the
    * seller must be able to match the deposit against the order amount. Returns the order id.
    */
-  addItem(product: Product, option: string, requested: number, settings: StoreSettings): string {
+  addItem(
+    product: Product,
+    option: string,
+    requested: number,
+    settings: StoreSettings,
+    broadcast: Broadcast,
+  ): string {
     const now = new Date();
     const quantity = Math.min(Math.max(1, requested), maxOrderQuantity(settings));
     const stored = parse(readRaw());
@@ -160,12 +166,13 @@ export const demoOrders = {
       ? stored.find(
           (order) =>
             isRoomOrder(order) &&
+            order.broadcastId === broadcast.id &&
             order.status === "UNPAID" &&
             !order.depositRequested &&
             !isExpired(order, now.getTime()),
         )
       : undefined;
-    const order = open ?? newOrder(now, settings);
+    const order = open ?? newOrder(now, settings, broadcast);
     const unitPrice = productPrice(product);
     const existing = order.items.find((entry) => entry.name === product.name && entry.option === option);
     const items = existing
