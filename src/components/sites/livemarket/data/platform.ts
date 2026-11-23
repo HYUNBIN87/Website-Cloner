@@ -159,6 +159,9 @@ function toState(value: unknown): PlatformState {
 }
 
 const current = () => toState(parseJson(store.read()));
+
+/** The platform state outside React (event handlers and other stores). Client only. */
+export const getPlatformState = (): PlatformState => current();
 const update = (change: (state: PlatformState) => PlatformState) => store.write(change(current()));
 
 /** `undefined` during server render and hydration. */

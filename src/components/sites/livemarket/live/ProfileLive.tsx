@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { Icon } from "../Icon";
 import { LOGIN_URL, NANDAPICK, SECRET_ROOM_URL, type Product } from "../data/nandapick";
+import { useStoreProducts } from "../data/store-products";
 import { useStoreSettings } from "../data/store-settings";
 import { BottomSheet } from "./BottomSheet";
 import { ProductCard } from "./ProductCard";
@@ -19,6 +20,8 @@ const store = NANDAPICK;
 
 export function ProfileLive() {
   const settings = useStoreSettings(store.slug);
+  // Snapshot products plus the ones the seller listed in the seller admin.
+  const storeProducts = useStoreProducts();
   const [query, setQuery] = useState("");
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [openSheet, setOpenSheet] = useState<Sheet>(null);
@@ -27,9 +30,9 @@ export function ProfileLive() {
 
   const products = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    if (!keyword) return store.products;
-    return store.products.filter((product) => product.name.toLowerCase().includes(keyword));
-  }, [query]);
+    if (!keyword) return storeProducts;
+    return storeProducts.filter((product) => product.name.toLowerCase().includes(keyword));
+  }, [query, storeProducts]);
 
   return (
     <div className={styles.page} data-lm-theme="dark">

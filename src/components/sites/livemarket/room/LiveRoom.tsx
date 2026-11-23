@@ -10,6 +10,7 @@ import { demoOrders, latestRoomOrder, useDemoOrders } from "../data/demo-orders"
 import { useDemoSession } from "../data/demo-session";
 import { NANDAPICK, ROOM_LOGIN_URL, type Product } from "../data/nandapick";
 import { nextFakeMessage, ownPurchaseMessage, seedMessages, type ChatMessage } from "../data/room-chat";
+import { useStoreProducts } from "../data/store-products";
 import { maxOrderQuantity, useStoreSettings } from "../data/store-settings";
 import { ROUTES } from "../data/routes";
 import { SELLERS } from "../data/sellers";
@@ -93,7 +94,9 @@ export function LiveRoom() {
   const orders = useDemoOrders();
   const settings = useStoreSettings(store.slug);
 
-  const pinned = store.products.find((product) => product.pinned) ?? store.products[0];
+  // Snapshot products plus the ones the seller listed in the seller admin.
+  const products = useStoreProducts();
+  const pinned = products.find((product) => product.pinned) ?? products[0];
   const followers = SELLERS.find((seller) => seller.slug === store.slug)?.followers ?? 0;
   const close = useCallback(() => setOverlay(null), []);
   const payOrder = overlay?.kind === "pay" ? orders?.find((order) => order.id === overlay.orderId) : undefined;
@@ -363,7 +366,7 @@ export function LiveRoom() {
             type="button"
             className={styles.productButton}
             onClick={() => setOverlay({ kind: "products" })}
-            aria-label={`상품 ${store.products.length}개 보기`}
+            aria-label={`상품 ${products.length}개 보기`}
           >
             <span className={styles.productThumb}>
               <Image src={pinned.image} alt="" width={40} height={40} />
@@ -371,7 +374,7 @@ export function LiveRoom() {
             <span className={styles.countBadge}>
               <span className={styles.badgeRing} />
               <span className={styles.badgeFill} />
-              <span className={styles.badgeText}>{store.products.length}</span>
+              <span className={styles.badgeText}>{products.length}</span>
             </span>
           </button>
         </div>
@@ -412,7 +415,7 @@ export function LiveRoom() {
       {overlay?.kind === "products" && (
         <RoomProductSheet
           storeName={store.name}
-          products={store.products}
+          products={products}
           onAdd={startOrder}
           onReplay={(product) => setOverlay({ kind: "replay", product })}
           onClose={close}
