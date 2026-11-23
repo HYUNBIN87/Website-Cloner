@@ -1,6 +1,5 @@
 import { NANDAPICK } from "./nandapick";
 import { SELLERS } from "./sellers";
-import { shippingFeeFor, type ShippingSettings } from "./store-settings";
 
 /*
  * Fake account shown on the logged-in screens. The layout follows the logged-in pages observed
@@ -48,6 +47,12 @@ export type DemoPreOrderItem = {
   amount: number;
 };
 
+/** The part of the store's shipping settings that decides an order's shipping fee. */
+export type OrderShipping = { fee: number; freeFrom: number | null };
+
+/** Terms of the built-in orders, and of orders saved before terms were stored on the order. */
+export const BUILT_IN_SHIPPING: OrderShipping = { fee: 4000, freeFrom: 100000 };
+
 export type DemoPreOrder = {
   id: string;
   /** "🔴 yy.MM.dd HH:mm 라이브" or "⏰ yy.MM.dd HH:mm 타임딜", as the source labels them. */
@@ -68,6 +73,11 @@ export type DemoPreOrder = {
   paymentDeadline?: string;
   /** Absent for orders placed in a regular live. */
   timeDeal?: { startedAt: string; title: string };
+  /**
+   * Shipping terms in force when the order was placed. Saved on the order so a later change of
+   * the store's shipping settings cannot change what the buyer owes. Absent on built-in orders.
+   */
+  shipping?: OrderShipping;
   /** 배송 요청사항 typed by the buyer. */
   request?: string;
   /** The buyer pressed "여기로 주문" on the address confirmation popup. */
@@ -92,10 +102,15 @@ export const DEMO_OPTIONS = {
 
 export const productPrice = (product: { price: string }) => Number(product.price.replace(/[^0-9]/g, "")) || 0;
 
-export function orderTotals(order: Pick<DemoPreOrder, "items">, shipping: ShippingSettings) {
+export const orderShipping = (order: Pick<DemoPreOrder, "shipping">): OrderShipping =>
+  order.shipping ?? BUILT_IN_SHIPPING;
+
+/** Amounts from the order's own items and the shipping terms saved with it. */
+export function orderTotals(order: Pick<DemoPreOrder, "items" | "shipping">) {
   const items = order.items.reduce((sum, entry) => sum + entry.amount, 0);
-  const fee = shippingFeeFor(items, shipping);
-  return { items, shipping: fee, total: items + fee };
+  const { fee, freeFrom } = orderShipping(order);
+  const shipping = freeFrom !== null && items >= freeFrom ? 0 : fee;
+  return { items, shipping, total: items + shipping };
 }
 
 const pad = (value: number) => String(value).padStart(2, "0");

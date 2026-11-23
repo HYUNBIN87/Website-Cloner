@@ -1,9 +1,14 @@
+"use client";
+
+import { useMemo, useSyncExternalStore } from "react";
 import { NANDAPICK } from "./nandapick";
 
 /**
- * Per-store settings a seller will later edit in the admin. For now the values live in this
- * file. Everything reads them through `getStoreSettings` / `useStoreSettings` below, so moving
- * to an admin-backed source only means changing those two functions.
+ * Per-store settings. The defaults live in this file; the seller admin draft
+ * (/seller-admin/settings) saves edited values to this browser's localStorage, and
+ * `getStoreSettings` / `useStoreSettings` below return the saved values over the defaults.
+ * Every screen reads settings through those two functions, so moving to a server-backed
+ * source only means changing them.
  *
  * The item list and the screens each item drives are documented in
  * docs/research/livemarket/store-settings.md. Keep the two in sync.
@@ -103,15 +108,153 @@ const DEMO_STORE_SETTINGS: Record<string, StoreSettings> = {
   },
 };
 
-/** The single place store settings are read from. */
-export function getStoreSettings(slug: string = NANDAPICK.slug): StoreSettings {
+export function defaultStoreSettings(slug: string = NANDAPICK.slug): StoreSettings {
   return DEMO_STORE_SETTINGS[slug] ?? DEMO_STORE_SETTINGS[NANDAPICK.slug];
 }
 
-/** Component-side reader. It is a hook so it can later subscribe to admin-edited settings. */
-export function useStoreSettings(slug?: string): StoreSettings {
-  return getStoreSettings(slug);
+/** Seller-edited settings, per store slug. Only in this browser; nothing is sent anywhere. */
+const STORAGE_KEY = "livemarket-clone-store-settings";
+const listeners = new Set<() => void>();
+
+function readRaw(): string | null {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
 }
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function parseSaved(raw: string | null): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const value: unknown = JSON.parse(raw);
+    return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+const text = (value: unknown, fallback: string) => (typeof value === "string" ? value : fallback);
+const wholeNumber = (value: unknown, fallback: number, min = 0) =>
+  typeof value === "number" && Number.isFinite(value) ? Math.max(min, Math.floor(value)) : fallback;
+const optionalAmount = (value: unknown, fallback: number | null) =>
+  value === null ? null : wholeNumber(value, fallback ?? 0);
+
+function texts<T extends Record<string, string>>(value: unknown, fallback: T): T {
+  const source = isRecord(value) ? value : {};
+  return Object.fromEntries(Object.keys(fallback).map((key) => [key, text(source[key], fallback[key])])) as T;
+}
+
+/** Saved values are untrusted (hand-edited storage, older shapes): every field falls back to the default. */
+export function normalizeStoreSettings(value: unknown, defaults: StoreSettings): StoreSettings {
+  if (!isRecord(value)) return defaults;
+  const deadline = isRecord(value.paymentDeadline) ? value.paymentDeadline : {};
+  const shipping = isRecord(value.shipping) ? value.shipping : {};
+  const steps = Array.isArray(value.onboarding) ? value.onboarding : [];
+  const step = (index: 0 | 1 | 2): OnboardingStep => {
+    const saved: unknown = steps[index];
+    const fallback = defaults.onboarding[index];
+    if (!isRecord(saved)) return fallback;
+    return {
+      emoji: text(saved.emoji, fallback.emoji),
+      title: saved.title === null ? null : text(saved.title, fallback.title ?? ""),
+      text: text(saved.text, fallback.text),
+    };
+  };
+  return {
+    paymentDeadline:
+      deadline.type === "MINUTES_AFTER_ORDER"
+        ? { type: "MINUTES_AFTER_ORDER", minutes: wholeNumber(deadline.minutes, 30, 1) }
+        : deadline.type === "NEXT_DAY_SAME_TIME"
+          ? { type: "NEXT_DAY_SAME_TIME" }
+          : defaults.paymentDeadline,
+    shipping: {
+      method: text(shipping.method, defaults.shipping.method),
+      fee: wholeNumber(shipping.fee, defaults.shipping.fee),
+      freeFrom: "freeFrom" in shipping ? optionalAmount(shipping.freeFrom, defaults.shipping.freeFrom) : defaults.shipping.freeFrom,
+      remoteAreaFee:
+        "remoteAreaFee" in shipping
+          ? optionalAmount(shipping.remoteAreaFee, defaults.shipping.remoteAreaFee)
+          : defaults.shipping.remoteAreaFee,
+    },
+    cancelChances: wholeNumber(value.cancelChances, defaults.cancelChances),
+    bankAccount: texts(value.bankAccount, defaults.bankAccount),
+    maxQuantityPerOrder: wholeNumber(value.maxQuantityPerOrder, defaults.maxQuantityPerOrder, 1),
+    mergeOrders: typeof value.mergeOrders === "boolean" ? value.mergeOrders : defaults.mergeOrders,
+    notice: text(value.notice, defaults.notice),
+    onboarding: [step(0), step(1), step(2)],
+    intro: text(value.intro, defaults.intro),
+    socials: texts(value.socials, defaults.socials),
+    customerCenterUrl: text(value.customerCenterUrl, defaults.customerCenterUrl),
+    shipFrom: texts(value.shipFrom, defaults.shipFrom),
+    returnTo: texts(value.returnTo, defaults.returnTo),
+  };
+}
+
+function resolveSettings(raw: string | null, slug: string): StoreSettings {
+  const defaults = defaultStoreSettings(slug);
+  const saved = parseSaved(raw)[slug];
+  return saved === undefined ? defaults : normalizeStoreSettings(saved, defaults);
+}
+
+/** The single place store settings are read from (outside React). On the server: the defaults. */
+export function getStoreSettings(slug: string = NANDAPICK.slug): StoreSettings {
+  return resolveSettings(typeof window === "undefined" ? null : readRaw(), slug);
+}
+
+/** Component-side reader; re-renders when the seller saves new settings. */
+export function useStoreSettings(slug: string = NANDAPICK.slug): StoreSettings {
+  const raw = useSyncExternalStore(subscribe, readRaw, () => null);
+  return useMemo(() => resolveSettings(raw, slug), [raw, slug]);
+}
+
+const noSubscription = () => () => {};
+
+/** False during server render and hydration, when `useStoreSettings` still returns the defaults. */
+export function useStoreSettingsLoaded(): boolean {
+  return useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false,
+  );
+}
+
+function writeSaved(next: Record<string, unknown>) {
+  try {
+    if (Object.keys(next).length === 0) window.localStorage.removeItem(STORAGE_KEY);
+    else window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Storage blocked: the settings simply do not persist.
+  }
+  listeners.forEach((listener) => listener());
+}
+
+/** Writes used by the seller admin's 스토어 설정 screen. */
+export const storeSettings = {
+  save(settings: StoreSettings, slug: string = NANDAPICK.slug) {
+    writeSaved({ ...parseSaved(readRaw()), [slug]: normalizeStoreSettings(settings, defaultStoreSettings(slug)) });
+  },
+  /** Back to the defaults in this file. */
+  reset(slug: string = NANDAPICK.slug) {
+    const next = parseSaved(readRaw());
+    delete next[slug];
+    writeSaved(next);
+  },
+};
 
 const policyMinutes = (policy: Extract<PaymentDeadlinePolicy, { type: "MINUTES_AFTER_ORDER" }>) =>
   Math.max(1, Math.floor(policy.minutes));

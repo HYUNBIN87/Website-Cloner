@@ -99,7 +99,7 @@ function deadlineOf(order: DemoPreOrder) {
 const isExpired = (order: DemoPreOrder, now: number) =>
   order.status === "UNPAID" && !order.depositRequested && now > deadlineOf(order);
 
-function resolve(order: DemoPreOrder, now: number): ResolvedPreOrder {
+export function resolvePreOrder(order: DemoPreOrder, now: number): ResolvedPreOrder {
   return {
     ...order,
     status: isExpired(order, now) ? "EXPIRED" : order.status,
@@ -116,7 +116,7 @@ export function useDemoOrders(): ResolvedPreOrder[] | undefined {
     () =>
       raw === undefined || now === undefined
         ? undefined
-        : merge(parse(raw)).map((order) => resolve(order, now)),
+        : merge(parse(raw)).map((order) => resolvePreOrder(order, now)),
     [raw, now],
   );
 }
@@ -138,6 +138,7 @@ function newOrder(now: Date, settings: StoreSettings): DemoPreOrder {
     orderedAt: now.toISOString(),
     // Saved once, from the setting in force at order time.
     paymentDeadline: paymentDeadline(now, settings.paymentDeadline).toISOString(),
+    shipping: { fee: settings.shipping.fee, freeFrom: settings.shipping.freeFrom },
     items: [],
     timeDeal: { startedAt: DEMO_TIME_DEAL.startedAt, title: DEMO_TIME_DEAL.title },
   };
@@ -179,7 +180,10 @@ export const demoOrders = {
     return next.id;
   },
 
-  update(id: string, patch: Pick<DemoPreOrder, "request" | "addressConfirmed" | "depositRequested">) {
+  update(
+    id: string,
+    patch: Partial<Pick<DemoPreOrder, "request" | "addressConfirmed" | "depositRequested" | "status">>,
+  ) {
     const stored = parse(readRaw());
     const current = stored.find((order) => order.id === id);
     if (current) {
@@ -188,5 +192,10 @@ export const demoOrders = {
     }
     const builtIn = DEMO_PRE_ORDERS.find((order) => order.id === id);
     if (builtIn) write([...stored, { ...builtIn, ...patch }]);
+  },
+
+  /** The seller confirmed the deposit (seller admin). Unknown ids are ignored. */
+  markPaid(id: string) {
+    this.update(id, { status: "PAID" });
   },
 };

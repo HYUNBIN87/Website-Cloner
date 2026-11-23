@@ -176,3 +176,7 @@ The source's order screens are login-only and were not captured, so this flow is
 Seller-editable values (payment deadline, shipping fees, cancel chances, deposit account, max quantity, order merging, notice, onboarding steps, intro, SNS links, customer center, ship-from and return addresses) live in `src/components/sites/livemarket/data/store-settings.ts` and are read only through `getStoreSettings` / `useStoreSettings`. The item list, demo values, the screens each item drives and the rules are in [store-settings.md](store-settings.md). All values are fake, including the notice (the captured notice text is no longer shown).
 
 The payment deadline defaults to the next day at the same time, matching the source onboarding's 24시간. It is computed once when an order is placed and stored on the order, so later setting changes do not move existing deadlines.
+
+### Seller admin draft (`/seller-admin`)
+
+Not a clone: the source admin has not been inspected. The draft follows `docs/platform/business-model.md` and is described in `docs/platform/seller-admin.md`. It lists the demo buyer's orders together with fake customer orders, confirms deposits, records shipments, shows supply stock and monthly figures, and edits the store settings. Everything is fake and stored in this browser's localStorage.

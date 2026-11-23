@@ -10,6 +10,7 @@ import {
   formatDateTime,
   formatKRW,
   formatOrderedAgo,
+  orderShipping,
   orderTotals,
 } from "../data/demo-account";
 import { demoOrders, type ResolvedPreOrder } from "../data/demo-orders";
@@ -30,8 +31,10 @@ export function PreOrderContent({ order }: { order: ResolvedPreOrder }) {
   const settings = useStoreSettings();
   const nickname = useDemoSession()?.nickname ?? DEMO_USER.nickname;
   const { shipping } = settings;
+  // Fee and free-shipping threshold are the ones saved with the order, not today's settings.
+  const terms = orderShipping(order);
   const status = PRE_ORDER_STATUS[order.status];
-  const totals = orderTotals(order, shipping);
+  const totals = orderTotals(order);
   const unpaid = order.status === "UNPAID";
   const deadline = formatDateTime(order.deadline);
   const [depositOpen, setDepositOpen] = useState(false);
@@ -92,14 +95,14 @@ export function PreOrderContent({ order }: { order: ResolvedPreOrder }) {
         <h3 className={styles.cardTitle}>배송 안내</h3>
         <div className={styles.line}>
           <span>🚚 {shipping.method}</span>
-          <strong>{formatKRW(shipping.fee)}</strong>
+          <strong>{formatKRW(terms.fee)}</strong>
         </div>
-        {(shipping.freeFrom !== null || shipping.remoteAreaFee !== null) && (
+        {(terms.freeFrom !== null || shipping.remoteAreaFee !== null) && (
           <ul className={styles.shippingNotes}>
-            {shipping.freeFrom !== null && (
+            {terms.freeFrom !== null && (
               <li>
                 <span className={styles.freeChip}>조건부 무료</span>
-                <span>{formatKRW(shipping.freeFrom)} 이상 구매 시 무료</span>
+                <span>{formatKRW(terms.freeFrom)} 이상 구매 시 무료</span>
               </li>
             )}
             {shipping.remoteAreaFee !== null && (
